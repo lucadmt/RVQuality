@@ -13,17 +13,17 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
 stop_words = set(stopwords.words('english'))
-data_fragment = pd.read_csv('./dataset/reviews_filtered_20_5.csv', sep=";")
-csv_text = data_fragment['text']
-csv_root_text = data_fragment['root_text']
+data_frame = pd.read_csv('./dataset/reviews_filtered_20_5.csv', sep=";")
+csv_text = data_frame['text']
+csv_root_text = data_frame['root_text']
 
 """ 1: bring everything to lowercase """
 
-data_fragment['text'] = csv_text.map(lambda x: x.lower())
-data_fragment['root_text'] = csv_root_text.map(lambda x: x.lower())
+data_frame['text'] = csv_text.map(lambda x: x.lower())
+data_frame['root_text'] = csv_root_text.map(lambda x: x.lower())
 
 out = open("./dataset/reviews_filtered_20_5_lowercased.csv", "w")
-out.write(data_fragment.to_csv(sep=";"))
+out.write(data_frame.to_csv(sep=";"))
 out.close()
 
-""" 2: remove stopwords """
+""" 2: remove rows with stopwords """
