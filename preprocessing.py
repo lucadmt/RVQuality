@@ -38,6 +38,9 @@ def stringlist_to_tokenlist(str):
                             .replace("'", '')
                             .replace(',', ''))
 
+lowercased_path = "./dataset/reviews_filtered_20_5_lowercased.csv"
+nostopwords_path = "./dataset/reviews_filtered_20_5_lowercased_nostopwords.csv"
+
 stop_words = set(stopwords.words('english'))
 data_frame = pd.read_csv('./dataset/reviews_filtered_20_5.csv', sep=";")
 
@@ -46,7 +49,7 @@ data_frame = pd.read_csv('./dataset/reviews_filtered_20_5.csv', sep=";")
 data_frame['text'] = data_frame['text'].map(lambda x: x.lower())
 data_frame['root_text'] = data_frame['root_text'].map(lambda x: x.lower())
 
-data_frame.to_csv("./dataset/reviews_filtered_20_5_lowercased.csv", index=False, sep=";")
+data_frame.to_csv(lowercased_path, index=False, sep=";")
 
 """ 2: remove rows with stopwords """
 
@@ -62,4 +65,4 @@ data_frame['text'] = clear(csv_text)
 data_frame['root_text'] = clear(csv_root_text)
 data_frame.dropna()
 
-data_frame.to_csv("./dataset/reviews_filtered_20_5_lowercased_nostopwords.csv", index=False, sep=";")
+data_frame.to_csv(nostopwords_path, index=False, sep=";")
