@@ -14,6 +14,8 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from functools import reduce
 
+from paths import lowercased_path, nostopwords_path
+
 ''' helper functions '''
 
 
@@ -24,9 +26,6 @@ def drop_stopwords(xs):
 def string_to_list(str):
     return re.sub(r'^(\[\')|(\',\s\')|(\'])$', '|', str).split('|')[1:-1]
 
-
-lowercased_path = "./dataset/reviews_filtered_20_5_lowercased.csv"
-nostopwords_path = "./dataset/reviews_filtered_20_5_lowercased_nostopwords.csv"
 
 stop_words = set(stopwords.words('english'))
 data_frame = pd.read_csv(lowercased_path, sep=";")
