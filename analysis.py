@@ -8,30 +8,31 @@ from paths import nostopwords_path, reviewers_stats_path, listings_stats_path
 
 def build_reviewer_stats(reviewers):
     return pd.DataFrame(data={
-            "num_review": reviewers.reviewer_id.count(),
-            "min_word_count": reviewers.comments.min(),
-            "mean_word_count": reviewers.comments.mean(),
-            "max_word_count": reviewers.comments.max(),
-            "median_word_count": reviewers.comments.median(),
-            "min_root_count": reviewers.root_text.min(),
-            "mean_root_count": reviewers.root_text.mean(),
-            "max_root_count": reviewers.root_text.max(),
-            "median_root_count": reviewers.root_text.median()
+        "num_review": reviewers.reviewer_id.count(),
+        "min_word_count": reviewers.comments.min(),
+        "mean_word_count": reviewers.comments.mean(),
+        "max_word_count": reviewers.comments.max(),
+        "median_word_count": reviewers.comments.median(),
+        "min_root_count": reviewers.root_text.min(),
+        "mean_root_count": reviewers.root_text.mean(),
+        "max_root_count": reviewers.root_text.max(),
+        "median_root_count": reviewers.root_text.median()
     })
 
 
 def build_listings_stats(listings):
     return pd.DataFrame(data={
-            "num_review": listings.listing_id.count(),
-            "min_word_count": listings.comments.min(),
-            "mean_word_count": listings.comments.mean(),
-            "max_word_count": listings.comments.max(),
-            "median_word_count": listings.comments.median(),
-            "min_root_count": listings.root_text.min(),
-            "mean_root_count": listings.root_text.mean(),
-            "max_root_count": listings.root_text.max(),
-            "median_root_count": listings.root_text.median()
+        "num_review": listings.listing_id.count(),
+        "min_word_count": listings.comments.min(),
+        "mean_word_count": listings.comments.mean(),
+        "max_word_count": listings.comments.max(),
+        "median_word_count": listings.comments.median(),
+        "min_root_count": listings.root_text.min(),
+        "mean_root_count": listings.root_text.mean(),
+        "max_root_count": listings.root_text.max(),
+        "median_root_count": listings.root_text.median()
     })
+
 
 data_frame = pd.read_csv(nostopwords_path, sep=";")
 
