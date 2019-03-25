@@ -6,15 +6,14 @@ preprocessing.py: a script which removes stopwords from
                     in another file.
 '''
 
-import nltk
 import re
+import csv
 import pandas as pd
 
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
 from functools import reduce
 
-from paths import lowercased_path, nostopwords_path
+from paths import lowercased_path, nostopwords_path, main_path
 
 ''' helper functions '''
 
@@ -28,14 +27,14 @@ def string_to_list(str):
 
 
 stop_words = set(stopwords.words('english'))
-data_frame = pd.read_csv(lowercased_path, sep=";")
+data_frame = pd.read_csv(main_path, sep=";")
 
 ''' 1: bring everything to lowercase '''
 
 data_frame['text'] = data_frame['text'].map(lambda x: x.lower())
 data_frame['root_text'] = data_frame['root_text'].map(lambda x: x.lower())
 
-data_frame.to_csv(lowercased_path, index=False, sep=";")
+data_frame.to_csv(lowercased_path, index=False, sep=";", quoting=csv.QUOTE_ALL)
 
 ''' 2: remove rows with stopwords '''
 
@@ -55,4 +54,5 @@ data_frame['root_text'] = pd.Series(
     map(drop_stopwords, data_frame['root_text'])
 )
 
-data_frame.to_csv(nostopwords_path, index=False, sep=";")
+data_frame.to_csv(nostopwords_path, index=False,
+                  sep=";", quoting=csv.QUOTE_ALL)

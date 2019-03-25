@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import csv
 import pandas as pd
 
 from preprocessing import string_to_list
@@ -51,5 +52,5 @@ data_frame['root_text'] = \
 reviewers_stats = build_reviewer_stats(data_frame.groupby(['reviewer_id']))
 listing_stats = build_listings_stats(data_frame.groupby(['listing_id']))
 
-reviewers_stats.to_csv(reviewers_stats_path, sep=";")
-listing_stats.to_csv(listings_stats_path, sep=";")
+reviewers_stats.to_csv(reviewers_stats_path, sep=";", quoting=csv.QUOTE_ALL)
+listing_stats.to_csv(listings_stats_path, sep=";", quoting=csv.QUOTE_ALL)
