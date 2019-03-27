@@ -4,7 +4,7 @@ import csv
 import pandas as pd
 
 from preprocessing import string_to_list
-from paths import nostopwords_path, reviewers_stats_path, listings_stats_path
+from paths import nostopwords_path, reviewers_stats_full_path, listings_stats_full_path
 
 
 def build_reviewer_stats(reviewers):
@@ -52,5 +52,6 @@ data_frame['root_text'] = \
 reviewers_stats = build_reviewer_stats(data_frame.groupby(['reviewer_id']))
 listing_stats = build_listings_stats(data_frame.groupby(['listing_id']))
 
-reviewers_stats.to_csv(reviewers_stats_path, sep=";", quoting=csv.QUOTE_ALL)
-listing_stats.to_csv(listings_stats_path, sep=";", quoting=csv.QUOTE_ALL)
+reviewers_stats.to_csv(reviewers_stats_full_path,
+                       sep=";", quoting=csv.QUOTE_ALL)
+listing_stats.to_csv(listings_stats_full_path, sep=";", quoting=csv.QUOTE_ALL)
