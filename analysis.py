@@ -4,7 +4,7 @@ import csv
 import pandas as pd
 
 from preprocessing import string_to_list
-from paths import nostopwords_path, reviewers_stats_full_path, listings_stats_full_path
+from paths import nostopwords_full_path, reviewers_stats_full_path, listings_stats_full_path
 
 
 def build_reviewer_stats(reviewers):
@@ -35,7 +35,7 @@ def build_listings_stats(listings):
     })
 
 
-data_frame = pd.read_csv(nostopwords_path, sep=";")
+data_frame = pd.read_csv(nostopwords_full_path, sep=";")
 
 data_frame['root_text'] = data_frame['root_text'].map(
     lambda x: string_to_list(x)
