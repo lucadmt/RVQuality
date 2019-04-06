@@ -91,3 +91,29 @@ def c4(r):
             ), axis=1))
 
     return review_len_disp / max_disp
+
+
+def c5(r):
+    mlc_user_r = medium(user_reviews(user(r))['root_text'])
+    review_rt_len_disp = abs(r['root_text'] - mlc_user_r)
+    max_disp = max(
+        utility.apply(
+            lambda row: abs(
+                row['root_text'] - medium(
+                    user_reviews(row['reviewer_id'])['root_text'])
+            ), axis=1))
+
+    return review_rt_len_disp / max_disp
+
+
+def c6(r):
+    mlc_item_r = medium(item_reviews(item(r))['root_text'])
+    review_rt_len_disp = abs(r['root_text'] - mlc_item_r)
+    max_disp = max(
+        utility.apply(
+            lambda row: abs(
+                row['root_text'] - medium(
+                    item_reviews(row['listing_id'])['root_text'])
+            ), axis=1))
+
+    return review_rt_len_disp / max_disp
