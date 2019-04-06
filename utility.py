@@ -35,3 +35,8 @@ def user_reviews(u):  # rev_user
 
 def item_reviews(i):  # rev_item
     return utility[utility['listing_id'] == i]
+
+
+def medium_polarity(pol_set):  # mp_*
+    # pol_set is rev_*['polarity']
+    return pol_set.sum()/pol_set.count()
