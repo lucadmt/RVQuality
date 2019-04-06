@@ -117,3 +117,13 @@ def c6(r):
             ), axis=1))
 
     return review_rt_len_disp / max_disp
+
+
+def review_utility(r, w):
+    return sum([w[0] * c1(r),
+                w[1] * c2(r),
+                w[2] * c3(r),
+                w[3] * c4(r),
+                w[4] * c5(r),
+                w[5] * c6(r)]
+               ) / sum(w)
