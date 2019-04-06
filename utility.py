@@ -78,3 +78,16 @@ def c3(r):
             ), axis=1))
 
     return review_len_disp / max_disp
+
+
+def c4(r):
+    mlw_item_r = medium(item_reviews(item(r))['review_length'])
+    review_len_disp = abs(r['review_length'] - mlw_item_r)
+    max_disp = max(
+        utility.apply(
+            lambda row: abs(
+                row['review_length'] - medium(
+                    item_reviews(row['listing_id'])['review_length'])
+            ), axis=1))
+
+    return review_len_disp / max_disp
