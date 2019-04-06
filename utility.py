@@ -27,3 +27,11 @@ def item(r):
 
 def user(r):
     return utility[utility['review_id'] == r]['reviewer_id']
+
+
+def user_reviews(u):  # rev_user
+    return utility[utility['reviewer_id'] == u]
+
+
+def item_reviews(i):  # rev_item
+    return utility[utility['listing_id'] == i]
