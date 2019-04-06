@@ -44,4 +44,24 @@ def medium_polarity(pol_set):  # mp_*
 
 def c1(r):
     mp_user_r = medium_polarity(user_reviews(user(r))['polarity'])
-    return abs(r['polarity'] - mp_user_r) / max(user_reviews(user(r))['polarity'])
+    review_pol_disp = abs(r['polarity'] - mp_user_r)
+    max_disp = max(
+        utility.apply(
+            lambda row: abs(
+                row['polarity'] - medium_polarity(
+                    user_reviews(row['reviewer_id'])['polarity'])
+            ), axis=1))
+
+    return review_pol_disp / max_disp
+
+
+def c2(r):
+    mp_item_r = medium_polarity(item_reviews(item(r))['polarity'])
+    review_pol_disp = abs(r['polarity'] - mp_item_r)
+    max_disp = max(
+        utility.apply(
+            lambda row: abs(
+                row['polarity'] - medium_polarity(
+                    item_reviews(row['listing_id'])['polarity'])
+            ), axis=1))
+    return review_pol_disp / max_disp
