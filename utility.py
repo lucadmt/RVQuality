@@ -21,109 +21,60 @@ utility = pd.DataFrame(data={
 })
 
 
-def item(r):
-    return utility[utility['review_id'] == r]['listing_id']
+def row(review_id):
+    return utility.loc[utility['review_id'] == review_id]
 
 
-def user(r):
-    return utility[utility['review_id'] == r]['reviewer_id']
+def item(review_id):
+    return utility.loc[utility['review_id'] == review_id]['listing_id'][0]
 
 
-def user_reviews(u):  # rev_user
-    return utility[utility['reviewer_id'] == u]
+def user(review_id):
+    return utility.loc[utility['review_id'] == review_id]['reviewer_id'][0]
 
 
-def item_reviews(i):  # rev_item
-    return utility[utility['listing_id'] == i]
+def user_reviews(user_id):  # rev_user
+    return utility.loc[utility['reviewer_id'] == user_id]
 
 
-def medium(set):
-    return set.sum() / set.count()
+def item_reviews(item_id):  # rev_item
+    return utility.loc[utility['listing_id'] == item_id]
 
 
-def c1(r):
-    mp_user_r = medium(user_reviews(user(r))['polarity'])
-    review_pol_disp = abs(r['polarity'] - mp_user_r)
-    max_disp = max(
-        utility.apply(
-            lambda row: abs(
-                row['polarity'] - medium(
-                    user_reviews(row['reviewer_id'])['polarity'])
-            ), axis=1))
-
-    return review_pol_disp / max_disp
+def mean(focus_set):
+    return focus_set.sum() / focus_set.count()
 
 
-def c2(r):
-    mp_item_r = medium(item_reviews(item(r))['polarity'])
-    review_pol_disp = abs(r['polarity'] - mp_item_r)
-    max_disp = max(
-        utility.apply(
-            lambda row: abs(
-                row['polarity'] - medium(
-                    item_reviews(row['listing_id'])['polarity'])
-            ), axis=1))
+def displacement(review_id, pov, focus):
+    # pov in ['item', 'user']
+    # focus in ['polarity', 'review_length', 'review_rt_length']
+    m_focus_pov = (mean(user_reviews(user(review_id))[focus]),
+                   mean(item_reviews(item(review_id))[focus]))[pov == 'item']
+    review_focus_disp = abs(row(review_id)[focus] - m_focus_pov)
 
-    return review_pol_disp / max_disp
+    max_disp = (
+        max(
+            utility.apply(
+                lambda row: abs(
+                    row[focus] - mean(
+                        user_reviews(row['reviewer_id'])[focus])
+                ), axis=1)),
+        max(
+            utility.apply(
+                lambda row: abs(
+                    row[focus] - mean(
+                        item_reviews(row['listing_id'])[focus])
+                ), axis=1))
+    )[pov == 'item']
 
-
-def c3(r):
-    mlw_user_r = medium(user_reviews(user(r))['review_length'])
-    review_len_disp = abs(r['review_length'] - mlw_user_r)
-    max_disp = max(
-        utility.apply(
-            lambda row: abs(
-                row['review_length'] - medium(
-                    user_reviews(row['reviewer_id'])['review_length'])
-            ), axis=1))
-
-    return review_len_disp / max_disp
-
-
-def c4(r):
-    mlw_item_r = medium(item_reviews(item(r))['review_length'])
-    review_len_disp = abs(r['review_length'] - mlw_item_r)
-    max_disp = max(
-        utility.apply(
-            lambda row: abs(
-                row['review_length'] - medium(
-                    item_reviews(row['listing_id'])['review_length'])
-            ), axis=1))
-
-    return review_len_disp / max_disp
-
-
-def c5(r):
-    mlc_user_r = medium(user_reviews(user(r))['root_text'])
-    review_rt_len_disp = abs(r['root_text'] - mlc_user_r)
-    max_disp = max(
-        utility.apply(
-            lambda row: abs(
-                row['root_text'] - medium(
-                    user_reviews(row['reviewer_id'])['root_text'])
-            ), axis=1))
-
-    return review_rt_len_disp / max_disp
-
-
-def c6(r):
-    mlc_item_r = medium(item_reviews(item(r))['root_text'])
-    review_rt_len_disp = abs(r['root_text'] - mlc_item_r)
-    max_disp = max(
-        utility.apply(
-            lambda row: abs(
-                row['root_text'] - medium(
-                    item_reviews(row['listing_id'])['root_text'])
-            ), axis=1))
-
-    return review_rt_len_disp / max_disp
+    return review_focus_disp / max_disp
 
 
 def review_utility(r, w):
-    return sum([w[0] * c1(r),
-                w[1] * c2(r),
-                w[2] * c3(r),
-                w[3] * c4(r),
-                w[4] * c5(r),
-                w[5] * c6(r)]
+    return sum([w[0] * displacement(r, 'user', 'polarity'),
+                w[1] * displacement(r, 'item', 'polarity'),
+                w[2] * displacement(r, 'user', 'review_length'),
+                w[3] * displacement(r, 'item', 'review_length'),
+                w[4] * displacement(r, 'user', 'review_rt_length'),
+                w[5] * displacement(r, 'item', 'review_rt_length')]
                ) / sum(w)
