@@ -40,3 +40,8 @@ def item_reviews(i):  # rev_item
 def medium_polarity(pol_set):  # mp_*
     # pol_set is rev_*['polarity']
     return pol_set.sum()/pol_set.count()
+
+
+def c1(r):
+    mp_user_r = medium_polarity(user_reviews(user(r))['polarity'])
+    return abs(r['polarity'] - mp_user_r) / max(user_reviews(user(r))['polarity'])
