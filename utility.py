@@ -19,3 +19,11 @@ utility = pd.DataFrame(data={
     "review_length": data_frame['comments'].map(lambda x: len(x.split(" "))),
     "review_rt_len": data_frame['root_text'].map(lambda x: len(string_to_list(x)))
 })
+
+
+def item(r):
+    return utility[utility['review_id'] == r]['listing_id']
+
+
+def user(r):
+    return utility[utility['review_id'] == r]['reviewer_id']
