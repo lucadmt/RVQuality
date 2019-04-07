@@ -5,9 +5,11 @@ utility.py: Provides an utility value for each review.
 '''
 
 import pandas as pd
+import threading
+import csv
 
 from preprocessing import string_to_list
-from paths import nostopwords_full_path
+from paths import nostopwords_full_path, utility_linearw_path
 
 data_frame = pd.read_csv(nostopwords_full_path, sep=";")
 
@@ -123,6 +125,47 @@ def review_utility(r, w):
                 w[1] * displacement(r, 'item', 'polarity'),
                 w[2] * displacement(r, 'user', 'review_length'),
                 w[3] * displacement(r, 'item', 'review_length'),
-                w[4] * displacement(r, 'user', 'review_rt_length'),
-                w[5] * displacement(r, 'item', 'review_rt_length')]
+                w[4] * displacement(r, 'user', 'review_rt_len'),
+                w[5] * displacement(r, 'item', 'review_rt_len')]
                ) / sum(w)
+
+
+def compute_utility(w, head_name, df):
+    df[head_name] = df['id'].map(
+        lambda r: review_utility(r, w))
+
+
+def main():
+    print("starting main()")
+
+    t_linear = threading.Thread(target=compute_utility, args=[
+        [1, 1, 1, 1, 1, 1],
+        "utility_linear",
+        data_frame
+    ])
+
+    t_linear_no_rt = threading.Thread(target=compute_utility, args=[
+        [1, 1, 1, 1, 0, 0],
+        "utility_linear_no_root_text",
+        data_frame
+    ])
+
+    t_linear_no_len = threading.Thread(target=compute_utility, args=[
+        [1, 1, 0, 0, 1, 1],
+        "utility_linear_no_length",
+        data_frame
+    ])
+
+    t_linear.start()
+    t_linear_no_rt.start()
+    t_linear_no_len.start()
+
+    t_linear_no_len.join()
+    t_linear_no_rt.join()
+    t_linear.join()
+
+    data_frame.to_csv(utility_linearw_path, sep=';', quoting=csv.QUOTE_ALL)
+
+
+if __name__ == "__main__":
+    main()
