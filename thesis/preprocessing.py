@@ -22,10 +22,6 @@ def drop_stopwords(xs):
     return list(filter(lambda y: y not in stop_words, xs))
 
 
-def string_to_list(str):
-    return re.sub(r'^(\[\')|(\',\s\')|(\'])$', '|', str).split('|')[1:-1]
-
-
 stop_words = set(stopwords.words('english'))
 data_frame = pd.read_csv(main_full_path, sep=";")
 
