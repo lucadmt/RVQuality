@@ -12,6 +12,7 @@ class UtilityTable:
         self.main_table = args[0]
         self.meta_table = generate_meta_table(self.main_table)
 
+        # generate mean and diff tables
         pool = ThreadPool(processes=4)
         rv_m = pool.apply_async(
             self.__get_table, [self.meta_table, 'reviewer', 0])
@@ -60,7 +61,10 @@ class UtilityTable:
             self.meta_table['review_id'] == review_id
         ]['reviewer_id'].iloc[0]
 
-    def displacement(self, review_id, pov, focus):
+    def displacement(self, args):
+        review_id = args[0]
+        pov = args[1]
+        focus = args[2]
         # pov in ['item', 'user']
         # focus in ['polarity', 'review_length', 'review_rt_length']
         m_focus_pov = (
@@ -77,39 +81,40 @@ class UtilityTable:
 
         return review_focus_disp / max_disp
 
-    def c9(self, review_id):
+    def c9(self, arg):
+        review_id = arg[0]
         return 1 - (
             abs(
                 self.row(review_id)['review_rating'] -
                 self.row(review_id)['polarity']
             ) / 4)
 
-    def __null_zero_terms(self, weight, func):
+    def __null_zero_terms(self, weight, func, args):
         if weight == 0:
-            return weight
+            return 0
         else:
-            return weight * func
+            return weight * func(args)
 
     def review_utility(self, r, w):
         return sum([
             self.__null_zero_terms(
-                w[0], self.displacement(r, 'user', 'polarity')),
+                w[0], self.displacement, [r, 'user', 'polarity']),
             self.__null_zero_terms(
-                w[1], self.displacement(r, 'item', 'polarity')),
+                w[1], self.displacement, [r, 'item', 'polarity']),
             self.__null_zero_terms(
-                w[2], self.displacement(r, 'user', 'review_length')),
+                w[2], self.displacement, [r, 'user', 'review_length']),
             self.__null_zero_terms(
-                w[3], self.displacement(r, 'item', 'review_length')),
+                w[3], self.displacement, [r, 'item', 'review_length']),
             self.__null_zero_terms(
-                w[4], self.displacement(r, 'user', 'review_rt_len')),
+                0, self.displacement, [r, 'user', 'review_rt_len']),
             self.__null_zero_terms(
-                w[5], self.displacement(r, 'item', 'review_rt_len')),
+                0, self.displacement, [r, 'item', 'review_rt_len']),
             self.__null_zero_terms(
-                w[6], self.displacement(r, 'user', 'review_rating')),
+                w[4], self.displacement, [r, 'user', 'review_rating']),
             self.__null_zero_terms(
-                w[7], self.displacement(r, 'item', 'review_rating')),
+                w[5], self.displacement, [r, 'item', 'review_rating']),
             self.__null_zero_terms(
-                w[8], self.c9(r))]
+                0, self.c9, [r])]
         ) / sum(w)
 
     def compute_utility(self, w, head_name, df):

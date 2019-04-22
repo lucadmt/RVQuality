@@ -18,7 +18,6 @@ class DiffTable:
             "review_id": self.meta_table['review_id'].sort_values(),
             "polarity": self.diff("polarity"),
             "review_length": self.diff("review_length"),
-            "review_rt_len": self.diff("review_rt_len"),
             "review_rating": self.diff("review_rating")
         })
 

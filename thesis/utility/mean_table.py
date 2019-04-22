@@ -18,9 +18,6 @@ class MeanTable:
             "review_length": self.focus_list.map(
                 lambda x: self.mean(self.reviews(x)['review_length'])
             ),
-            "review_rt_len": self.focus_list.map(
-                lambda x: self.mean(self.reviews(x)['review_rt_len'])
-            ),
             "review_rating": self.focus_list.map(
                 lambda x: self.mean(self.reviews(x)['review_rating'])
             )
