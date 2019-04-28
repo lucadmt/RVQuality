@@ -9,9 +9,9 @@ import threading
 import csv
 import time
 
-from common.transformations import string_to_list, switch_series
-from utility.utility_table import UtilityTable
-import paths
+from thesis.common.transformations import string_to_list, switch_series
+from thesis.utility.utility_table import UtilityTable
+import thesis.paths
 
 '''
 Index(['id', 'listing_id', 'reviewer_id', 'review.date', 'comments',

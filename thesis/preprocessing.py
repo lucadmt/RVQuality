@@ -13,7 +13,7 @@ import pandas as pd
 from nltk.corpus import stopwords
 from functools import reduce
 
-from paths import lowercased_full_path, nostopwords_full_path, main_full_path
+from thesis.paths import lowercased_full_path, nostopwords_full_path, main_full_path
 
 ''' helper functions '''
 

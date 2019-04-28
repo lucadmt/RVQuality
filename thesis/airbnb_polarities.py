@@ -9,9 +9,9 @@ import threading
 import csv
 import time
 
-from common.transformations import string_to_list
-from utility.utility_table import UtilityTable
-import paths
+from thesis.common.transformations import string_to_list
+from thesis.utility.utility_table import UtilityTable
+import thesis.paths
 
 start = time.time()
 

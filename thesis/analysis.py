@@ -3,8 +3,8 @@
 import csv
 import pandas as pd
 
-from preprocessing import string_to_list
-from paths import nostopwords_full_path, reviewers_stats_full_path, listings_stats_full_path
+from thesis.preprocessing import string_to_list
+from thesis.paths import nostopwords_full_path, reviewers_stats_full_path, listings_stats_full_path
 
 
 def build_reviewer_stats(reviewers):
