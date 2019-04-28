@@ -1,4 +1,7 @@
 import re
+from nltk.corpus import stopwords
+
+stop_words = set(stopwords.words('english'))
 
 
 def swap_series(full_table, s1, s2):  # swaps two series
@@ -19,3 +22,7 @@ def switch_series(full_table, s1, s2):  # swaps s1, s2, deletes s2
 
 def string_to_list(str):
     return re.sub(r'^(\[\')|(\',\s\')|(\'])$', '|', str).split('|')[1:-1]
+
+
+def drop_stopwords(wordlist):
+    return list(filter(lambda y: y not in stop_words, wordlist))

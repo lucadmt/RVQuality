@@ -10,8 +10,8 @@ import csv
 import time
 
 from thesis.common.transformations import string_to_list
-from thesis.utility.utility_table import UtilityTable
-import thesis.paths
+from thesis.utility import UtilityTable
+import paths
 
 start = time.time()
 

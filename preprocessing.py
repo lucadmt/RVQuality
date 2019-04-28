@@ -13,16 +13,9 @@ import pandas as pd
 from nltk.corpus import stopwords
 from functools import reduce
 
-from thesis.paths import lowercased_full_path, nostopwords_full_path, main_full_path
+from paths import lowercased_full_path, nostopwords_full_path, main_full_path
+from thesis.common.transformations import drop_stopwords, string_to_list
 
-''' helper functions '''
-
-
-def drop_stopwords(xs):
-    return list(filter(lambda y: y not in stop_words, xs))
-
-
-stop_words = set(stopwords.words('english'))
 data_frame = pd.read_csv(main_full_path, sep=";")
 
 ''' 1: bring everything to lowercase '''

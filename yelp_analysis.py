@@ -10,8 +10,8 @@ import csv
 import time
 
 from thesis.common.transformations import string_to_list, switch_series
-from thesis.utility.utility_table import UtilityTable
-import thesis.paths
+from thesis.utility import UtilityTable
+import paths
 
 '''
 Index(['id', 'listing_id', 'reviewer_id', 'review.date', 'comments',

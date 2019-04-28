@@ -1,5 +1,4 @@
 import pandas as pd
-from thesis.common.transformations import string_to_list
 
 
 def generate_meta_table(full_table):
