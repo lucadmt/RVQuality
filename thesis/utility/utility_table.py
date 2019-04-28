@@ -106,15 +106,15 @@ class UtilityTable:
             self.__null_zero_terms(
                 w[3], self.displacement, [r, 'item', 'review_length']),
             self.__null_zero_terms(
-                0, self.displacement, [r, 'user', 'review_rt_len']),
+                w[4], self.displacement, [r, 'user', 'review_rt_len']),
             self.__null_zero_terms(
-                0, self.displacement, [r, 'item', 'review_rt_len']),
+                w[5], self.displacement, [r, 'item', 'review_rt_len']),
             self.__null_zero_terms(
-                w[4], self.displacement, [r, 'user', 'review_rating']),
+                w[6], self.displacement, [r, 'user', 'review_rating']),
             self.__null_zero_terms(
-                w[5], self.displacement, [r, 'item', 'review_rating']),
+                w[7], self.displacement, [r, 'item', 'review_rating']),
             self.__null_zero_terms(
-                0, self.c9, [r])]
+                w[8], self.c9, [r])]
         ) / sum(w)
 
     def compute_utility(self, w, head_name, df):
