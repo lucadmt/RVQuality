@@ -98,39 +98,25 @@ c4_t.start()
 c3_t.join()
 c4_t.join()
 
-# review_rating = est_rating
-
-c7est_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 0, 0, 0, 0, 0, 1, 0, 0], 'c7est', data_frame
-])
-
-c8est_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 0, 0, 0, 0, 0, 0, 1, 0], 'c8est', data_frame
-])
-
-c7est_t.start()
-c8est_t.start()
-
-c7est_t.join()
-c8est_t.join()
+# review_rating = review.stars
 
 # review_rating = appreciations
-data_frame = switch_series(data_frame, "est_rating", "appreciations")
+data_frame = switch_series(data_frame, "est_rating", "review.stars")
 utility_table = UtilityTable(data_frame)
 
-c7app_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 0, 0, 0, 0, 0, 1, 0, 0], 'c7app', data_frame
+c7stars_t = threading.Thread(target=utility_table.compute_utility, args=[
+    [0, 0, 0, 0, 0, 0, 1, 0, 0], 'c7stars', data_frame
 ])
 
-c8app_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 0, 0, 0, 0, 0, 0, 1, 0], 'c8app', data_frame
+c8stars_t = threading.Thread(target=utility_table.compute_utility, args=[
+    [0, 0, 0, 0, 0, 0, 0, 1, 0], 'c8stars', data_frame
 ])
 
-c7app_t.start()
-c8app_t.start()
+c7stars_t.start()
+c8stars_t.start()
 
-c7app_t.join()
-c8app_t.join()
+c7stars_t.join()
+c8stars_t.join()
 
 end = time.time()
 
@@ -145,10 +131,8 @@ yelp_components['c1mean'] = data_frame['c1mean']
 yelp_components['c2mean'] = data_frame['c2mean']
 yelp_components['c3'] = data_frame['c3']
 yelp_components['c4'] = data_frame['c4']
-yelp_components['c7est'] = data_frame['c7est']
-yelp_components['c8est'] = data_frame['c8est']
-yelp_components['c7app'] = data_frame['c7app']
-yelp_components['c8app'] = data_frame['c8app']
+yelp_components['c7stars'] = data_frame['c7stars']
+yelp_components['c8stars'] = data_frame['c8stars']
 
 
 yelp_components.to_csv(paths.yelp_polarities_single_path,
