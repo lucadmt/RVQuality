@@ -55,7 +55,11 @@ string_lemmas = data_frame['lemmas'].map(lambda list_row: " ".join(list_row))
 corpus = [x for x in string_lemmas]
 
 # let any word be considered
-vectorizer = TfidfVectorizer(token_pattern=r'\S+')
+vectorizer = TfidfVectorizer(
+    smooth_idf=True,
+    ngram_range=(1, 1),
+    token_pattern=r'\S+'
+)
 
 sparse = vectorizer.fit_transform(corpus)
 
