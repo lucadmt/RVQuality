@@ -16,6 +16,7 @@ script, inputfile, outputfile = sys.argv
 if not os.path.isfile(inputfile):
     sys.exit("Error: No such file: "+inputfile)
 
+
 data_frame = pd.read_csv(inputfile, sep=';')
 
 if 'comments' not in data_frame.columns:
@@ -23,60 +24,59 @@ if 'comments' not in data_frame.columns:
 
 # split to a list of lowercased words, then drop stopwords
 data_frame['comments'] = data_frame['comments'].map(
-    lambda x: x.lower().translate(str.maketrans('', '', punctuation+'\n\r\xa0\xad')))
-# data_frame['comments'] = pd.Series(map(drop_stopwords, data_frame['comments']))
+    lambda x: x.lower().translate(
+        str.maketrans('', '', punctuation+'\n\r\xa0\xad')
+    ).split(' ')
+)
 
-# lemmatize + reduce
+data_frame['comments'] = pd.Series(
+    map(drop_stopwords, data_frame['comments'])
+)
+
+# lemmatize
 lemmatizer = WordNetLemmatizer()
 data_frame['lemmas'] = data_frame['comments'].map(
-    lambda words: reduce(
-        lambda x, y: x + " " + y,  # concatenate all words
-        map(lambda word: lemmatizer.lemmatize(word), words),
-        ""
+    lambda words:
+    list(map(lambda word: lemmatizer.lemmatize(word), words))
+)
+
+# remove empty string
+data_frame['lemmas'] = data_frame['lemmas'].map(
+    lambda list_row:
+    list(
+        filter(
+            lambda word: word is not '', list_row
+        )
     )
 )
 
-vectorizer = TfidfVectorizer(
-    strip_accents='unicode',
-    smooth_idf=True,
-    stop_words='english',
-    ngram_range=(1, 1)
+# build the corpus
+string_lemmas = data_frame['lemmas'].map(lambda list_row: " ".join(list_row))
+corpus = [x for x in string_lemmas]
+
+# let any word be considered
+vectorizer = TfidfVectorizer(token_pattern=r'\S+')
+
+sparse = vectorizer.fit_transform(corpus)
+
+
+def get_tf_idf_vect(tf_idf_matrix, lemma_list, idx):
+    return list(map(lambda word: tf_idf_matrix[word][idx], lemma_list))
+
+
+# convert the sparse matrix to dataframe
+cols = vectorizer.get_feature_names()
+dense = sparse.todense()
+tf_idf_df = pd.DataFrame(dense, columns=cols)
+
+lemmas = data_frame['lemmas']
+
+data_frame['tf_idf_vect'] = pd.Series(
+    [
+        get_tf_idf_vect(tf_idf_df, lemmas[idx], idx)
+        for idx in range(0, len(data_frame.values))
+    ]
 )
-
-tfidf_matrix = vectorizer.fit_transform([x for x in data_frame['comments']])
-mcoo = tfidf_matrix.tocoo()
-tfidf_dict = {k: v for k, v in zip(vectorizer.get_feature_names(), mcoo.data)}
-
-of = open(outputfile.replace('.csv', '.dict'), 'w')
-of.write(str(tfidf_dict))
-of.close()
-
-uncaptured = set()
-
-
-def get_vect(comment, tf_idfs_dict):
-    tf_idf_vect = []
-    for x in tf_idfs_dict:
-        try:
-            if x in comment:
-                tf_idf_vect.append(tf_idfs_dict[x])
-        except KeyError as ke:
-            print(x)
-            uncaptured.add(x)
-        pass
-    return tf_idf_vect
-
-
-data_frame['tf_idf_vect'] = data_frame['comments'].map(
-    lambda comment: get_vect(comment, tfidf_dict)
-)
-
-print(uncaptured)
-
-of = open(outputfile.replace('.csv', '.set').replace(
-    'tf_idfs', 'uncaptured').replace('out', 'uncaptured'), 'w')
-of.write(str(uncaptured))
-of.close()
 
 data_frame['tf_idf_mean'] = data_frame['tf_idf_vect'].map(
     lambda row: float(sum(row)) / max(len(row), 1)
