@@ -45,7 +45,7 @@ data_frame['lemmas'] = data_frame['lemmas'].map(
     lambda list_row:
     list(
         filter(
-            lambda word: word is not '', list_row
+            lambda word: len(word) >= 3, list_row
         )
     )
 )
