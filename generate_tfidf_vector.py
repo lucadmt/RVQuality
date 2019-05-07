@@ -58,7 +58,7 @@ corpus = [x for x in string_lemmas]
 vectorizer = TfidfVectorizer(
     smooth_idf=True,
     ngram_range=(1, 1),
-    token_pattern=r'\S+'
+    token_pattern=r'\S{3,}'
 )
 
 sparse = vectorizer.fit_transform(corpus)
