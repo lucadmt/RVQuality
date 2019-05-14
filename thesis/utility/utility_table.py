@@ -1,4 +1,7 @@
 import pandas as pd
+import statistics
+import math
+import ast
 from multiprocessing.pool import ThreadPool
 
 from .mean_table import MeanTable
@@ -61,6 +64,28 @@ class UtilityTable:
             self.meta_table['review_id'] == review_id
         ]['reviewer_id'].iloc[0]
 
+    def c9(self, args):
+        review_id = args[0]
+        return 1 - (
+            abs(
+                self.row(review_id)['review_rating'] -
+                self.row(review_id)['polarity']
+            ) / 4)
+
+    def c10(self, args):
+        review_id = args[0]
+        return (math.log10(self.row(review_id)['review_rating'] + 1) /
+                1 + math.log10(self.row(review_id)['review_rating'] + 1))
+
+    def c11(self, args):
+        review_id = args[0]
+        tf_idf_vect = self.row(review_id)['tf_idf_vect']
+
+        if type(tf_idf_vect) is str:
+            tf_idf_vect = ast.literal_eval(tf_idf_vect)
+
+        return statistics.mean(tf_idf_vect)
+
     def displacement(self, args):
         review_id = args[0]
         pov = args[1]
@@ -80,14 +105,6 @@ class UtilityTable:
         )[pov == 'item']
 
         return review_focus_disp / max_disp
-
-    def c9(self, arg):
-        review_id = arg[0]
-        return 1 - (
-            abs(
-                self.row(review_id)['review_rating'] -
-                self.row(review_id)['polarity']
-            ) / 4)
 
     def __null_zero_terms(self, weight, func, args):
         if weight == 0:
@@ -114,7 +131,12 @@ class UtilityTable:
             self.__null_zero_terms(
                 w[7], self.displacement, [r, 'item', 'review_rating']),
             self.__null_zero_terms(
-                w[8], self.c9, [r])]
+                w[8], self.c9, [r]),
+            self.__null_zero_terms(
+                w[9], self.c10, [r]),
+            self.__null_zero_terms(
+                w[10], self.c11, [r])]
+
         ) / sum(w)
 
     def compute_utility(self, w, head_name, df):

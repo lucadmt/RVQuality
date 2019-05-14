@@ -30,11 +30,11 @@ data_frame = data_frame.drop("continuous_pol", axis=1)
 utility_table = UtilityTable(data_frame)
 
 c1tb_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [1, 0, 0, 0, 0, 0, 0, 0, 0], 'c1tb', data_frame
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'c1tb', data_frame
 ])
 
 c2tb_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 1, 0, 0, 0, 0, 0, 0, 0], 'c2tb', data_frame
+    [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'c2tb', data_frame
 ])
 
 c1tb_t.start()
@@ -51,11 +51,11 @@ data_frame = data_frame.drop("continuous_pol_vader", axis=1)
 utility_table = UtilityTable(data_frame)
 
 c1v_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [1, 0, 0, 0, 0, 0, 0, 0, 0], 'c1v', data_frame
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'c1v', data_frame
 ])
 
 c2v_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 1, 0, 0, 0, 0, 0, 0, 0], 'c2v', data_frame
+    [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'c2v', data_frame
 ])
 
 c1v_t.start()
@@ -72,11 +72,11 @@ data_frame = data_frame.drop("pol_mean_tb_v", axis=1)
 utility_table = UtilityTable(data_frame)
 
 c1mean_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [1, 0, 0, 0, 0, 0, 0, 0, 0], 'c1mean', data_frame
+    [1, 0, 0, 0, 0, 0, 0, 0, 0], 0, 0, 'c1mean', data_frame
 ])
 
 c2mean_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 1, 0, 0, 0, 0, 0, 0, 0], 'c2mean', data_frame
+    [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'c2mean', data_frame
 ])
 
 c1mean_t.start()
