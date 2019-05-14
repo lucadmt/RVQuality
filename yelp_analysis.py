@@ -7,6 +7,7 @@ yelp_analysis.py: Analyze the utility components on yelp dataset.
 import pandas as pd
 import threading
 import csv
+import ast
 import time
 
 from thesis.common.transformations import string_to_list, switch_series
@@ -16,13 +17,16 @@ import paths
 '''
 Index(['id', 'listing_id', 'reviewer_id', 'review.date', 'comments',
        'pol_rating', 'pol_rating_vader', 'appreciations', 'lemmas',
-       'tf_idf_vect', 'polarity', 'est_rating'],
+       'tf_idf_vect', 'polarity', 'review_rating'],
       dtype='object')
 '''
 
 start = time.time()
 
 data_frame = pd.read_csv(paths.yelp_processed_path, sep=";")
+
+data_frame['tf_idf_vect'] = data_frame['tf_idf_vect'].map(
+    ast.literal_eval)
 
 utility_table = UtilityTable(data_frame)
 

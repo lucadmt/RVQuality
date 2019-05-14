@@ -1,7 +1,6 @@
 import pandas as pd
 import statistics
 import math
-import ast
 from multiprocessing.pool import ThreadPool
 
 from .mean_table import MeanTable
@@ -79,11 +78,9 @@ class UtilityTable:
 
     def c11(self, args):
         review_id = args[0]
-        tf_idf_vect = self.row(review_id)['tf_idf_vect']
-
-        if type(tf_idf_vect) is str:
-            tf_idf_vect = ast.literal_eval(tf_idf_vect)
-
+        tf_idf_vect = (self.main_table.loc[
+            self.main_table['id'] == review_id
+        ].iloc[0])['tf_idf_vect']
         return statistics.mean(tf_idf_vect)
 
     def displacement(self, args):
