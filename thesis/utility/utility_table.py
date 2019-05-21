@@ -73,8 +73,10 @@ class UtilityTable:
 
     def c10(self, args):
         review_id = args[0]
-        return (math.log10(self.row(review_id)['review_rating'] + 1) /
-                1 + math.log10(self.row(review_id)['review_rating'] + 1))
+        return (
+            math.log10(self.row(review_id)['review_rating'] + 1) /
+            (1 + math.log10(self.row(review_id)['review_rating'] + 1))
+        )
 
     def c11(self, args):
         review_id = args[0]

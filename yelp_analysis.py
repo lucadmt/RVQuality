@@ -10,7 +10,7 @@ import csv
 import ast
 import time
 
-from thesis.common.transformations import string_to_list, switch_series
+from thesis.common.transformations import switch_series, drop_series
 from thesis.utility import UtilityTable
 import paths
 
@@ -23,7 +23,7 @@ Index(['id', 'listing_id', 'reviewer_id', 'review.date', 'comments',
 
 start = time.time()
 
-data_frame = pd.read_csv(paths.yelp_processed_path, sep=";")
+data_frame = pd.read_csv(paths.yelp_tf_idf_vect_path, sep=";")
 
 data_frame['tf_idf_vect'] = data_frame['tf_idf_vect'].map(
     ast.literal_eval)
@@ -95,6 +95,12 @@ end = time.time()
 
 print("computations finished, they took: " +
       str(end-start)+". Check dataset dir.")
+
+
+data_frame = data_frame[
+    ["id", "listing_id", "reviewer_id", "review.date", "comments", "pol_rating", "pol_rating_vader", "appreciations", "lemmas",
+     "tf_idf_vect", "polarity", "est_rating", "tf_idf_mean", "review.stars", "c1", "c2", "c3", "c4", "c7", "c8", "c9", "c10", "c11", ]
+]
 
 
 data_frame.to_csv(paths.yelp_components,
