@@ -53,6 +53,11 @@ class UtilityTable:
             self.meta_table['review_id'] == review_id
         ].iloc[0]
 
+    def main_row(self, review_id):
+        return (self.main_table.loc[
+            self.main_table['id'] == review_id
+        ].iloc[0])
+
     def item(self, review_id):
         return self.meta_table.loc[
             self.meta_table['review_id'] == review_id
@@ -63,6 +68,12 @@ class UtilityTable:
             self.meta_table['review_id'] == review_id
         ]['reviewer_id'].iloc[0]
 
+    def _normalize_log(self, arg):
+        return (
+            math.log10(arg + 1) /
+            (1 + math.log10(arg + 1))
+        )
+
     def c9(self, args):
         review_id = args[0]
         return 1 - (
@@ -72,25 +83,42 @@ class UtilityTable:
             ) / 4)
 
     def c10(self, args):
-        review_id = args[0]
-        return (
-            math.log10(self.row(review_id)['review_rating'] + 1) /
-            (1 + math.log10(self.row(review_id)['review_rating'] + 1))
-        )
+        # args[0] = review_id
+        return self._normalize_log(self.row(args[0])['review_rating'])
 
     def c11(self, args):
         review_id = args[0]
-        tf_idf_vect = (self.main_table.loc[
-            self.main_table['id'] == review_id
-        ].iloc[0])['tf_idf_vect']
+        tf_idf_vect = self.main_row(review_id)['tf_idf_vect']
         return statistics.mean(tf_idf_vect)
+
+    def c12(self, args):
+        # args[0] = review_id
+        return self._normalize_log(self.row(args[0])['review_length'])
+
+    def filter_by_listing(self, listing_id):
+        return self.main_table[
+            self.main_table['listing_id'] == listing_id
+        ]
+
+    def _max_item_appreciations(self, listing_id):
+        return self.filter_by_listing(listing_id)['appreciations'].max()
+
+    def fcontr(self, review_id):
+        listing_id = self.main_row(review_id)['listing_id']
+        if self.main_row(review_id)['appreciations'] == 0:
+            return 0
+        else:
+            return (
+                self.main_row(review_id)['appreciations'] /
+                self._max_item_appreciations(listing_id)
+            )
 
     def displacement(self, args):
         review_id = args[0]
         pov = args[1]
         focus = args[2]
         # pov in ['item', 'user']
-        # focus in ['polarity', 'review_length', 'review_rt_length']
+        # focus in ['polarity', 'review_length', 'review_rating']
         m_focus_pov = (
             self.reviewer_mean(self.user(review_id), focus),
             self.item_mean(self.item(review_id), focus)
@@ -134,10 +162,18 @@ class UtilityTable:
             self.__null_zero_terms(
                 w[9], self.c10, [r]),
             self.__null_zero_terms(
-                w[10], self.c11, [r])]
+                w[10], self.c11, [r]),
+            self.__null_zero_terms(
+                w[11], self.c12, [r])]
 
         ) / sum(w)
 
     def compute_utility(self, w, head_name, df):
         df[head_name] = df['id'].map(
-            lambda r: self.review_utility(r, w))
+            lambda r: self.review_utility(r, w)
+        )
+
+    def compute_fcontr(self, df):
+        df['fcontr'] = df['id'].map(
+            lambda r: self.fcontr(r)
+        )

@@ -10,5 +10,5 @@ def generate_meta_table(full_table):
         "review_length": full_table['comments'].map(
             lambda x: len(x.split(" "))
         ),
-        "review_rating": full_table['est_rating']
+        "review_rating": full_table['rating']
     })

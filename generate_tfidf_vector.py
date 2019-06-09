@@ -5,7 +5,7 @@ import sys
 import csv
 import numpy as np
 import pandas as pd
-from thesis.common.transformations import drop_stopwords, string_to_list
+from thesis.common.transformations import drop_stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from functools import reduce
@@ -23,19 +23,19 @@ if 'comments' not in data_frame.columns:
     sys.exit("Error: the file you provided hasn't 'comments' column")
 
 # split to a list of lowercased words, then drop stopwords
-data_frame['comments'] = data_frame['comments'].map(
+cleaned_comments = data_frame['comments'].map(
     lambda x: x.lower().translate(
         str.maketrans('', '', punctuation+'\n\r\xa0\xad')
     ).split(' ')
 )
 
-data_frame['comments'] = pd.Series(
-    map(drop_stopwords, data_frame['comments'])
+cleaned_comments = pd.Series(
+    map(drop_stopwords, cleaned_comments)
 )
 
 # lemmatize
 lemmatizer = WordNetLemmatizer()
-data_frame['lemmas'] = data_frame['comments'].map(
+data_frame['lemmas'] = cleaned_comments.map(
     lambda words:
     list(map(lambda word: lemmatizer.lemmatize(word), words))
 )
