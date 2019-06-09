@@ -10,8 +10,7 @@ import csv
 import ast
 import time
 
-from thesis.common.transformations import switch_series, drop_series
-from thesis.utility import UtilityTable
+from rvquality.utility import UtilityTable
 import paths
 
 start = time.time()
