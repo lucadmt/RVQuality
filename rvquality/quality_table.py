@@ -1,11 +1,20 @@
 import pandas as pd
 from statistics import mean
 import math
+import csv
+import os
+from hashlib import md5
 
 
 class QualityTable:
-    def __init__(self, *args, **kwargs):
-        self.main_table = args[0]
+    def __init__(self, main_table, default_weight=1):
+        self.main_table = main_table
+        self.default_weight = default_weight
+
+    def main_row(self, review_id):
+        return (self.main_table.loc[
+            self.main_table['id'] == review_id
+        ].iloc[0])
 
     def set_reviewer_id(self, colname="reviewer_id"):
         self.reviewer_id_name = colname
@@ -23,11 +32,47 @@ class QualityTable:
         self.review_comments_name = colname
 
     def prepare(self):
-        self.meta_table = self._generate_meta_table()
-        self.items_means = self._generate_means_table("listing")
-        self.reviewers_means = self._generate_means_table("reviewer")
-        self.items_diffs = self._generate_diffs_table("listing")
-        self.reviewers_diffs = self._generate_diffs_table("reviewer")
+        if not os.path.exists("~/.rvcache"):
+            os.makedirs("~/.rvcache")
+        file_hash = md5(self.main_table.to_csv(
+            index=False, sep=";", quoting=csv.QUOTE_ALL))
+        if os.path.exists("~/.rvcache/"+file_hash+".csv"):
+            self.meta_table = pd.read_csv("~/.rvcache/"+file_hash+"_meta.csv")
+            self.items_means = pd.read_csv(
+                "~/.rvcache/"+file_hash+"_listing_means.csv")
+            self.reviewers_means = pd.read_csv(
+                "~/.rvcache/"+file_hash+"_reviewers_means.csv")
+            self.items_diffs = pd.read_csv(
+                "~/.rvcache/"+file_hash+"_listing_diffs.csv")
+            self.reviewers_diffs = pd.read_csv(
+                "~/.rvcache/"+file_hash+"_reviewers_diffs.csv")
+        else:
+            self.meta_table = self._generate_meta_table()
+            self.items_means = self._generate_means_table("listing")
+            self.reviewers_means = self._generate_means_table("reviewer")
+            self.items_diffs = self._generate_diffs_table("listing")
+            self.reviewers_diffs = self._generate_diffs_table("reviewer")
+
+            self.meta_table.to_csv(
+                "~/.rvcache"+file_hash+"_meta.csv",
+                index=False,
+                sep=";", quoting=csv.QUOTE_ALL)
+            self.items_means.to_csv(
+                "~/.rvcache"+file_hash+"_listing_means.csv",
+                index=False,
+                sep=";", quoting=csv.QUOTE_ALL)
+            self.reviewers_means.to_csv(
+                "~/.rvcache"+file_hash+"_reviewers_means.csv",
+                index=False,
+                sep=";", quoting=csv.QUOTE_ALL)
+            self.items_diffs.to_csv(
+                "~/.rvcache"+file_hash+"_listing_diffs.csv",
+                index=False,
+                sep=";", quoting=csv.QUOTE_ALL)
+            self.reviewers_diffs.to_csv(
+                "~/.rvcache"+file_hash+"_reviewers_diffs.csv",
+                index=False,
+                sep=";", quoting=csv.QUOTE_ALL)
 
     def _generate_meta_table(self):
         return pd.DataFrame(data={
@@ -116,16 +161,33 @@ class QualityTable:
             "review_rating": self.diff("review_rating")
         })
 
-    def main_row(self, review_id):
-        return (self.main_table.loc[
-            self.main_table['id'] == review_id
-        ].iloc[0])
+    def _displacement(self, args):
+        review_id = args[0]
+        pov = args[1]
+        focus = args[2]
+        # pov in ['item', 'user']
+        # focus in ['polarity', 'review_length', 'review_rating']
+        m_focus_pov = (
+            self.reviewer_mean(self.meta_user(review_id), focus),
+            self.item_mean(self.meta_item(review_id), focus)
+        )[pov == 'item']
+
+        review_focus_disp = abs(self.meta_row(review_id)[focus] - m_focus_pov)
+
+        max_disp = (
+            self.reviewers_diffs[focus].max(),
+            self.items_diffs[focus].max()
+        )[pov == 'item']
+
+        return review_focus_disp / max_disp
 
     def _normalize_log(self, arg):
         return (
             math.log10(arg + 1) /
             (1 + math.log10(arg + 1))
         )
+
+    # def c_*(self, review_id, weight)
 
     def c9(self, args):
         review_id = args[0]
@@ -166,27 +228,6 @@ class QualityTable:
                 self._max_item_appreciations(listing_id)
             )
 
-    def displacement(self, args):
-
-        review_id = args[0]
-        pov = args[1]
-        focus = args[2]
-        # pov in ['item', 'user']
-        # focus in ['polarity', 'review_length', 'review_rating']
-        m_focus_pov = (
-            self.reviewer_mean(self.meta_user(review_id), focus),
-            self.item_mean(self.meta_item(review_id), focus)
-        )[pov == 'item']
-
-        review_focus_disp = abs(self.meta_row(review_id)[focus] - m_focus_pov)
-
-        max_disp = (
-            self.reviewers_diffs[focus].max(),
-            self.items_diffs[focus].max()
-        )[pov == 'item']
-
-        return review_focus_disp / max_disp
-
     def __null_zero_terms(self, weight, func, args):
         if weight == 0:
             return 0
@@ -196,21 +237,21 @@ class QualityTable:
     def review_utility(self, r, w):
         return sum([
             self.__null_zero_terms(
-                w[0], self.displacement, [r, 'user', 'polarity']),
+                w[0], self._displacement, [r, 'user', 'polarity']),
             self.__null_zero_terms(
-                w[1], self.displacement, [r, 'item', 'polarity']),
+                w[1], self._displacement, [r, 'item', 'polarity']),
             self.__null_zero_terms(
-                w[2], self.displacement, [r, 'user', 'review_length']),
+                w[2], self._displacement, [r, 'user', 'review_length']),
             self.__null_zero_terms(
-                w[3], self.displacement, [r, 'item', 'review_length']),
+                w[3], self._displacement, [r, 'item', 'review_length']),
             self.__null_zero_terms(
-                w[4], self.displacement, [r, 'user', 'review_rt_len']),
+                w[4], self._displacement, [r, 'user', 'review_rt_len']),
             self.__null_zero_terms(
-                w[5], self.displacement, [r, 'item', 'review_rt_len']),
+                w[5], self._displacement, [r, 'item', 'review_rt_len']),
             self.__null_zero_terms(
-                w[6], self.displacement, [r, 'user', 'review_rating']),
+                w[6], self._displacement, [r, 'user', 'review_rating']),
             self.__null_zero_terms(
-                w[7], self.displacement, [r, 'item', 'review_rating']),
+                w[7], self._displacement, [r, 'item', 'review_rating']),
             self.__null_zero_terms(
                 w[8], self.c9, [r]),
             self.__null_zero_terms(
