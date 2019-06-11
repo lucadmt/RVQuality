@@ -1,15 +1,36 @@
-import pandas as pd
-from statistics import mean
-import math
 import csv
+import math
 import os
 from hashlib import md5
+from statistics import mean
+from string import punctuation
+from rvquality.common import drop_stopwords
+from nltk.stem import WordNetLemmatizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+import pandas as pd
 
 
 class QualityTable:
     def __init__(self, main_table, default_weight=1):
         self.main_table = main_table
         self.default_weight = default_weight
+        self.weights = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+        self.review_id_name = "review_id"
+        self.reviewer_id_name = "reviewer_id"
+        self.listing_id_name = "listing_id"
+        self.polarity_name = "polarity"
+        self.review_comments_name = "comments"
+        self.review_rating_name = "rating"
+        self.tf_idf_vect_name = "tf_idf_vect"
+
+        self.meta_review_id_name = "id"
+        self.meta_reviewer_id_name = "reviewer_id"
+        self.meta_listing_id_name = "listing_id"
+        self.meta_polarity_name = "polarity"
+        self.meta_review_length_name = "review_length"
+        self.meta_review_rating_name = "review_rating"
 
     def main_row(self, review_id):
         return (self.main_table.loc[
@@ -31,59 +52,76 @@ class QualityTable:
     def set_review_comments(self, colname="comments"):
         self.review_comments_name = colname
 
+    def set_review_rating(self, colname="rating"):
+        self.review_rating_name = colname
+
     def prepare(self):
-        if not os.path.exists("~/.rvcache"):
-            os.makedirs("~/.rvcache")
+        if not os.path.exists(os.path.expanduser("~/.rvcache/")):
+            os.makedirs(os.path.expanduser("~/.rvcache/"))
+
         file_hash = md5(self.main_table.to_csv(
-            index=False, sep=";", quoting=csv.QUOTE_ALL))
-        if os.path.exists("~/.rvcache/"+file_hash+".csv"):
-            self.meta_table = pd.read_csv("~/.rvcache/"+file_hash+"_meta.csv")
-            self.items_means = pd.read_csv(
-                "~/.rvcache/"+file_hash+"_listing_means.csv")
-            self.reviewers_means = pd.read_csv(
-                "~/.rvcache/"+file_hash+"_reviewers_means.csv")
-            self.items_diffs = pd.read_csv(
-                "~/.rvcache/"+file_hash+"_listing_diffs.csv")
-            self.reviewers_diffs = pd.read_csv(
-                "~/.rvcache/"+file_hash+"_reviewers_diffs.csv")
+            index=False, sep=";", quoting=csv.QUOTE_ALL).encode()).hexdigest()
+
+        if os.path.exists(os.path.expanduser(
+                "~/.rvcache/"+file_hash+"_meta.csv")):
+            self.meta_table = pd.read_csv(os.path.expanduser(
+                "~/.rvcache/"+file_hash+"_meta.csv"))
+            self.items_means = pd.read_csv(os.path.expanduser(
+                "~/.rvcache/"+file_hash+"_listing_means.csv"))
+            self.reviewers_means = pd.read_csv(os.path.expanduser(
+                "~/.rvcache/"+file_hash+"_reviewers_means.csv"))
+            self.items_diffs = pd.read_csv(os.path.expanduser(
+                "~/.rvcache/"+file_hash+"_listing_diffs.csv"))
+            self.reviewers_diffs = pd.read_csv(os.path.expanduser(
+                "~/.rvcache/"+file_hash+"_reviewers_diffs.csv"))
         else:
+            # generate intermediate tables
             self.meta_table = self._generate_meta_table()
             self.items_means = self._generate_means_table("listing")
             self.reviewers_means = self._generate_means_table("reviewer")
             self.items_diffs = self._generate_diffs_table("listing")
             self.reviewers_diffs = self._generate_diffs_table("reviewer")
 
+            # save intermediate tables
             self.meta_table.to_csv(
-                "~/.rvcache"+file_hash+"_meta.csv",
+                os.path.expanduser("~/.rvcache/"+file_hash+"_meta.csv"),
                 index=False,
                 sep=";", quoting=csv.QUOTE_ALL)
             self.items_means.to_csv(
-                "~/.rvcache"+file_hash+"_listing_means.csv",
+                os.path.expanduser("~/.rvcache/"+file_hash +
+                                   "_listing_means.csv"),
                 index=False,
                 sep=";", quoting=csv.QUOTE_ALL)
             self.reviewers_means.to_csv(
-                "~/.rvcache"+file_hash+"_reviewers_means.csv",
+                os.path.expanduser("~/.rvcache/"+file_hash +
+                                   "_reviewers_means.csv"),
                 index=False,
                 sep=";", quoting=csv.QUOTE_ALL)
             self.items_diffs.to_csv(
-                "~/.rvcache"+file_hash+"_listing_diffs.csv",
+                os.path.expanduser("~/.rvcache/"+file_hash +
+                                   "_listing_diffs.csv"),
                 index=False,
                 sep=";", quoting=csv.QUOTE_ALL)
             self.reviewers_diffs.to_csv(
-                "~/.rvcache"+file_hash+"_reviewers_diffs.csv",
+                os.path.expanduser("~/.rvcache/"+file_hash +
+                                   "_reviewers_diffs.csv"),
                 index=False,
                 sep=";", quoting=csv.QUOTE_ALL)
 
     def _generate_meta_table(self):
         return pd.DataFrame(data={
-            "reviewer_id": self.main_table[self.reviewer_id_name],
-            "listing_id": self.main_table[self.listing_id_name],
-            "review_id": self.main_table[self.review_id_name],
-            "polarity": self.main_table[self.polarity_name],
-            "review_length": self.main_table[self.review_comments_name].map(
+            self.meta_reviewer_id_name: self.main_table[self.reviewer_id_name],
+            self.meta_listing_id_name: self.main_table[self.listing_id_name],
+            self.meta_review_id_name: self.main_table[self.review_id_name],
+            self.meta_polarity_name: self.main_table[self.polarity_name],
+            self.meta_review_length_name: self.main_table[
+                self.review_comments_name
+            ].map(
                 lambda x: len(x.split(" "))
             ),
-            "review_rating": self.main_table['rating']
+            self.meta_review_rating_name: self.main_table[
+                self.review_rating_name
+            ]
         })
 
     def meta_row(self, review_id):
@@ -92,20 +130,24 @@ class QualityTable:
         ].iloc[0]
 
     def meta_user_reviews(self, user_id):  # rev_user
-        return self.meta_table.loc[self.meta_table['reviewer_id'] == user_id]
+        return self.meta_table.loc[
+            self.meta_table[self.meta_reviewer_id_name] == user_id
+        ]
 
     def meta_item_reviews(self, item_id):  # rev_item
-        return self.meta_table.loc[self.meta_table['listing_id'] == item_id]
+        return self.meta_table.loc[
+            self.meta_table[self.meta_listing_id_name] == item_id
+        ]
 
     def meta_item(self, review_id):
         return self.meta_table.loc[
-            self.meta_table['review_id'] == review_id
-        ]['listing_id'].iloc[0]
+            self.meta_table[self.meta_review_id_name] == review_id
+        ][self.meta_listing_id_name].iloc[0]
 
     def meta_user(self, review_id):
         return self.meta_table.loc[
-            self.meta_table['review_id'] == review_id
-        ]['reviewer_id'].iloc[0]
+            self.meta_table[self.meta_review_id_name] == review_id
+        ][self.meta_reviewer_id_name].iloc[0]
 
     def _generate_means_table(self, focus):
         focus_list = pd.Series(data=self.meta_table
@@ -117,13 +159,15 @@ class QualityTable:
         return pd.DataFrame(data={
             focus+"_id": focus_list,
             "polarity": focus_list.map(
-                lambda x: mean((reviews(x)['polarity']).tolist())
+                lambda x: mean((reviews(x)[self.meta_polarity_name]).tolist())
             ),
             "review_length": focus_list.map(
-                lambda x: mean((reviews(x)['review_length']).tolist())
+                lambda x: mean(
+                    (reviews(x)[self.meta_review_length_name]).tolist())
             ),
             "review_rating": focus_list.map(
-                lambda x: mean((reviews(x)['review_rating']).tolist())
+                lambda x: mean(
+                    (reviews(x)[self.meta_review_rating_name]).tolist())
             )
         })
 
@@ -155,11 +199,77 @@ class QualityTable:
             else self._item_abs_diff
 
         return pd.DataFrame(data={
-            "review_id": self.meta_table['review_id'].sort_values(),
+            "review_id": self.meta_table[
+                self.meta_review_id_name].sort_values(),
             "polarity": self.diff("polarity"),
             "review_length": self.diff("review_length"),
             "review_rating": self.diff("review_rating")
         })
+
+    def generate_tf_idf(self):
+        vectorizer = TfidfVectorizer(
+            smooth_idf=True,
+            ngram_range=(1, 1),
+            token_pattern=r'\S{3,}'
+        )
+
+        # split to a list of lowercased words, then drop stopwords
+        cleaned_comments = self.main_table[self.review_comments_name].map(
+            lambda x: x.lower().translate(
+                str.maketrans('', '', punctuation+'\n\r\xa0\xad')
+            ).split(' ')
+        )
+
+        cleaned_comments = pd.Series(
+            map(drop_stopwords, cleaned_comments)
+        )
+
+        # lemmatize
+        lemmatizer = WordNetLemmatizer()
+        self.main_table['lemmas'] = cleaned_comments.map(
+            lambda words:
+            list(map(lambda word: lemmatizer.lemmatize(word), words))
+        )
+
+        # remove empty string
+        self.main_table['lemmas'] = self.main_table['lemmas'].map(
+            lambda list_row:
+            list(
+                filter(
+                    lambda word: len(word) >= 3, list_row
+                )
+            )
+        )
+
+        # build the corpus
+        string_lemmas = self.main_table['lemmas'].map(
+            lambda list_row: " ".join(list_row))
+        corpus = [x for x in string_lemmas]
+
+        sparse = vectorizer.fit_transform(corpus)
+
+        # convert the sparse matrix to dataframe
+        cols = vectorizer.get_feature_names()
+        dense = sparse.todense()
+        tf_idf_df = pd.DataFrame(dense, columns=cols)
+
+        def get_tf_idf_vect(tf_idf_matrix, lemma_list, idx):
+            return list(map(lambda word: tf_idf_matrix[word][idx], lemma_list))
+
+        lemmas = self.main_table['lemmas']
+
+        self.main_table['tf_idf_vect'] = pd.Series(
+            [
+                get_tf_idf_vect(tf_idf_df, lemmas[idx], idx)
+                for idx in range(0, len(self.main_table.values))
+            ]
+        )
+
+        self.main_table['tf_idf_mean'] = self.main_table['tf_idf_vect'].map(
+            lambda row: float(sum(row)) / max(len(row), 1)
+        )
+
+        self.main_table['tf_idf_sum'] = self.main_table['tf_idf_vect'].map(sum)
 
     def _displacement(self, args):
         review_id = args[0]
@@ -193,13 +303,15 @@ class QualityTable:
         review_id = args[0]
         return 1 - (
             abs(
-                self.meta_row(review_id)['review_rating'] -
-                self.meta_row(review_id)['polarity']
+                self.meta_row(review_id)[self.meta_review_rating_name] -
+                self.meta_row(review_id)[self.meta_polarity_name]
             ) / 4)
 
     def c10(self, args):
         # args[0] = review_id
-        return self._normalize_log(self.meta_row(args[0])['review_rating'])
+        return self._normalize_log(
+            self.meta_row(args[0])[self.meta_review_rating_name]
+        )
 
     def c11(self, args):
         review_id = args[0]
@@ -208,18 +320,20 @@ class QualityTable:
 
     def c12(self, args):
         # args[0] = review_id
-        return self._normalize_log(self.meta_row(args[0])['review_length'])
+        return self._normalize_log(
+            self.meta_row(args[0])[self.meta_review_length_name]
+        )
 
     def filter_by_listing(self, listing_id):
         return self.main_table[
-            self.main_table['listing_id'] == listing_id
+            self.main_table[self.listing_id_name] == listing_id
         ]
 
     def _max_item_appreciations(self, listing_id):
         return self.filter_by_listing(listing_id)['appreciations'].max()
 
     def fcontr(self, review_id):
-        listing_id = self.main_row(review_id)['listing_id']
+        listing_id = self.main_row(review_id)[self.listing_id_name]
         if self.main_row(review_id)['appreciations'] == 0:
             return 0
         else:
@@ -228,7 +342,7 @@ class QualityTable:
                 self._max_item_appreciations(listing_id)
             )
 
-    def __null_zero_terms(self, weight, func, args):
+    def _null_zero_terms(self, weight, func, args):
         if weight == 0:
             return 0
         else:
@@ -236,32 +350,38 @@ class QualityTable:
 
     def review_utility(self, r, w):
         return sum([
-            self.__null_zero_terms(
+            self._null_zero_terms(
                 w[0], self._displacement, [r, 'user', 'polarity']),
-            self.__null_zero_terms(
+            self._null_zero_terms(
                 w[1], self._displacement, [r, 'item', 'polarity']),
-            self.__null_zero_terms(
+            self._null_zero_terms(
                 w[2], self._displacement, [r, 'user', 'review_length']),
-            self.__null_zero_terms(
+            self._null_zero_terms(
                 w[3], self._displacement, [r, 'item', 'review_length']),
-            self.__null_zero_terms(
+            self._null_zero_terms(
                 w[4], self._displacement, [r, 'user', 'review_rt_len']),
-            self.__null_zero_terms(
+            self._null_zero_terms(
                 w[5], self._displacement, [r, 'item', 'review_rt_len']),
-            self.__null_zero_terms(
+            self._null_zero_terms(
                 w[6], self._displacement, [r, 'user', 'review_rating']),
-            self.__null_zero_terms(
+            self._null_zero_terms(
                 w[7], self._displacement, [r, 'item', 'review_rating']),
-            self.__null_zero_terms(
+            self._null_zero_terms(
                 w[8], self.c9, [r]),
-            self.__null_zero_terms(
+            self._null_zero_terms(
                 w[9], self.c10, [r]),
-            self.__null_zero_terms(
+            self._null_zero_terms(
                 w[10], self.c11, [r]),
-            self.__null_zero_terms(
+            self._null_zero_terms(
                 w[11], self.c12, [r])]
-
         ) / sum(w)
+
+    def compute_c(self, n, df, weight=1):
+        local_weights = self.weights[:]  # copy template list
+        local_weights[n-1] = weight
+        df["c_"+n] = df['id'].map(
+            lambda r: self.review_utility(r, local_weights)
+        )
 
     def compute_utility(self, w, head_name, df):
         df[head_name] = df['id'].map(

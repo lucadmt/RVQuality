@@ -10,7 +10,7 @@ import csv
 import ast
 import time
 
-from rvquality.utility import UtilityTable
+from rvquality.quality_table import QualityTable
 import paths
 
 start = time.time()
@@ -27,7 +27,7 @@ data_frame.rename(index=str, columns={
                   'pol_mean_tb_v': 'polarity'
                   }, inplace=True)
 
-utility_table = UtilityTable(data_frame)
+utility_table = QualityTable(data_frame)
 
 c1_t = threading.Thread(target=utility_table.compute_utility, args=[
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'c1', data_frame
