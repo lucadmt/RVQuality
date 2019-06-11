@@ -4,11 +4,12 @@ import os
 from hashlib import md5
 from statistics import mean
 from string import punctuation
-from rvquality.common import drop_stopwords
+
+import pandas as pd
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-import pandas as pd
+from rvquality.common import drop_stopwords
 
 # main table constants
 ID_NAME = "review_id"
@@ -18,6 +19,9 @@ POLARITY_NAME = "polarity"
 COMMENTS_NAME = "comments"
 RATING_NAME = "rating"
 TF_IDF_VECT_NAME = "tf_idf_vect"
+TF_IDF_SUM_NAME = "tf_idf_sum"
+TF_IDF_MEAN_NAME = "tf_idf_mean"
+APPRECIATIONS_NAME = "appreciations"
 
 # meta table constants
 META_ID_NAME = "id"
@@ -109,6 +113,9 @@ class QualityTable:
                                    "_reviewers_diffs.csv"),
                 index=False,
                 sep=";", quoting=csv.QUOTE_ALL)
+
+        if TF_IDF_VECT_NAME not in self.main_table.columns:
+            self.generate_tf_idf()
 
     def _generate_meta_table(self):
         return pd.DataFrame(data={
@@ -267,11 +274,12 @@ class QualityTable:
             ]
         )
 
-        self.main_table['tf_idf_mean'] = self.main_table[TF_IDF_VECT_NAME].map(
-            lambda row: float(sum(row)) / max(len(row), 1)
-        )
+        self.main_table[TF_IDF_MEAN_NAME] = \
+            self.main_table[TF_IDF_VECT_NAME].map(
+            lambda row: float(sum(row)) / max(len(row), 1))
 
-        self.main_table['tf_idf_sum'] = self.main_table[TF_IDF_VECT_NAME].map(
+        self.main_table[TF_IDF_SUM_NAME] = \
+            self.main_table[TF_IDF_VECT_NAME].map(
             sum)
 
     def _displacement(self, args):
@@ -318,7 +326,7 @@ class QualityTable:
 
     def c11(self, args):
         review_id = args[0]
-        tf_idf_vect = self.main_row(review_id)['tf_idf_vect']
+        tf_idf_vect = self.main_row(review_id)[TF_IDF_VECT_NAME]
         return mean(tf_idf_vect)
 
     def c12(self, args):
@@ -333,15 +341,15 @@ class QualityTable:
         ]
 
     def _max_item_appreciations(self, listing_id):
-        return self.filter_by_listing(listing_id)['appreciations'].max()
+        return self.filter_by_listing(listing_id)[APPRECIATIONS_NAME].max()
 
     def fcontr(self, review_id):
         listing_id = self.main_row(review_id)[LISTING_ID_NAME]
-        if self.main_row(review_id)['appreciations'] == 0:
+        if self.main_row(review_id)[APPRECIATIONS_NAME] == 0:
             return 0
         else:
             return (
-                self.main_row(review_id)['appreciations'] /
+                self.main_row(review_id)[APPRECIATIONS_NAME] /
                 self._max_item_appreciations(listing_id)
             )
 
