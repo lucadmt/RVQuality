@@ -2,5 +2,6 @@
 dataset/
 __pycache__/
 .pytest_cache/
+regression.py
 
 .DS_Store

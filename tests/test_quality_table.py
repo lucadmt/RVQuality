@@ -15,4 +15,4 @@ class TestQualityTable(object):
         qt.set_review_rating("review.stars")
 
         qt.prepare()
-        assert os.path.exists("~/.rvcache")
+        assert os.path.exists(os.path.expanduser("~/.rvcache"))
