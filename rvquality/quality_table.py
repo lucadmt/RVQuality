@@ -11,29 +11,30 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 from rvquality.common import drop_stopwords
 
-# main table constants
-ID_NAME = "review_id"
-REVIEWER_ID_NAME = "reviewer_id"
-LISTING_ID_NAME = "listing_id"
-POLARITY_NAME = "polarity"
-COMMENTS_NAME = "comments"
-RATING_NAME = "rating"
-TF_IDF_VECT_NAME = "tf_idf_vect"
-TF_IDF_SUM_NAME = "tf_idf_sum"
-TF_IDF_MEAN_NAME = "tf_idf_mean"
-APPRECIATIONS_NAME = "appreciations"
-
-# meta table constants
-META_ID_NAME = "id"
-META_REVIEWER_ID_NAME = "reviewer_id"
-META_LISTING_ID_NAME = "listing_id"
-META_POLARITY_NAME = "polarity"
-META_LENGTH_NAME = "review_length"
-META_RATING_NAME = "review_rating"
-
 
 class QualityTable:
     def __init__(self, main_table, default_weight=1):
+
+        # main table constants
+        self.ID_NAME = "review_id"
+        self.REVIEWER_ID_NAME = "reviewer_id"
+        self.LISTING_ID_NAME = "listing_id"
+        self.POLARITY_NAME = "polarity"
+        self.COMMENTS_NAME = "comments"
+        self.RATING_NAME = "rating"
+        self.TF_IDF_VECT_NAME = "tf_idf_vect"
+        self.TF_IDF_SUM_NAME = "tf_idf_sum"
+        self.TF_IDF_MEAN_NAME = "tf_idf_mean"
+        self.APPRECIATIONS_NAME = "appreciations"
+
+        # meta table constants
+        self.META_ID_NAME = "id"
+        self.META_REVIEWER_ID_NAME = "reviewer_id"
+        self.META_LISTING_ID_NAME = "listing_id"
+        self.META_POLARITY_NAME = "polarity"
+        self.META_LENGTH_NAME = "review_length"
+        self.META_RATING_NAME = "review_rating"
+
         self.main_table = main_table
         self.default_weight = default_weight
         self.weights = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -44,22 +45,22 @@ class QualityTable:
         ].iloc[0])
 
     def set_reviewer_id(self, colname="reviewer_id"):
-        REVIEWER_ID_NAME = colname
+        self.REVIEWER_ID_NAME = colname
 
     def set_listing_id(self, colname="listing_id"):
-        LISTING_ID_NAME = colname
+        self.LISTING_ID_NAME = colname
 
     def set_review_id(self, colname="review_id"):
-        REVIEWER_ID_NAME = colname
+        self.ID_NAME = colname
 
     def set_polarity(self, colname="polarity"):
-        POLARITY_NAME = colname
+        self.POLARITY_NAME = colname
 
     def set_review_comments(self, colname="comments"):
-        COMMENTS_NAME = colname
+        self.COMMENTS_NAME = colname
 
     def set_review_rating(self, colname="rating"):
-        RATING_NAME = colname
+        self.RATING_NAME = colname
 
     def prepare(self):
         if not os.path.exists(os.path.expanduser("~/.rvcache/")):
@@ -114,49 +115,49 @@ class QualityTable:
                 index=False,
                 sep=";", quoting=csv.QUOTE_ALL)
 
-        if TF_IDF_VECT_NAME not in self.main_table.columns:
+        if self.TF_IDF_VECT_NAME not in self.main_table.columns:
             self.generate_tf_idf()
 
     def _generate_meta_table(self):
         return pd.DataFrame(data={
-            META_REVIEWER_ID_NAME: self.main_table[REVIEWER_ID_NAME],
-            META_LISTING_ID_NAME: self.main_table[LISTING_ID_NAME],
-            META_ID_NAME: self.main_table[ID_NAME],
-            META_POLARITY_NAME: self.main_table[POLARITY_NAME],
-            META_LENGTH_NAME: self.main_table[
-                COMMENTS_NAME
+            self.META_REVIEWER_ID_NAME: self.main_table[self.REVIEWER_ID_NAME],
+            self.META_LISTING_ID_NAME: self.main_table[self.LISTING_ID_NAME],
+            self.META_ID_NAME: self.main_table[self.ID_NAME],
+            self.META_POLARITY_NAME: self.main_table[self.POLARITY_NAME],
+            self.META_LENGTH_NAME: self.main_table[
+                self.COMMENTS_NAME
             ].map(
                 lambda x: len(x.split(" "))
             ),
-            META_RATING_NAME: self.main_table[
-                RATING_NAME
+            self.META_RATING_NAME: self.main_table[
+                self.RATING_NAME
             ]
         })
 
     def meta_row(self, review_id):
         return self.meta_table.loc[
-            self.meta_table[META_ID_NAME] == review_id
+            self.meta_table[self.META_ID_NAME] == review_id
         ].iloc[0]
 
     def meta_user_reviews(self, user_id):  # rev_user
         return self.meta_table.loc[
-            self.meta_table[META_REVIEWER_ID_NAME] == user_id
+            self.meta_table[self.META_REVIEWER_ID_NAME] == user_id
         ]
 
     def meta_item_reviews(self, item_id):  # rev_item
         return self.meta_table.loc[
-            self.meta_table[META_LISTING_ID_NAME] == item_id
+            self.meta_table[self.META_LISTING_ID_NAME] == item_id
         ]
 
     def meta_item(self, review_id):
         return self.meta_table.loc[
-            self.meta_table[META_ID_NAME] == review_id
-        ][META_LISTING_ID_NAME].iloc[0]
+            self.meta_table[self.META_ID_NAME] == review_id
+        ][self.META_LISTING_ID_NAME].iloc[0]
 
     def meta_user(self, review_id):
         return self.meta_table.loc[
-            self.meta_table[META_ID_NAME] == review_id
-        ][META_REVIEWER_ID_NAME].iloc[0]
+            self.meta_table[self.META_ID_NAME] == review_id
+        ][self.META_REVIEWER_ID_NAME].iloc[0]
 
     def _generate_means_table(self, focus):
         focus_list = pd.Series(data=self.meta_table
@@ -168,15 +169,15 @@ class QualityTable:
         return pd.DataFrame(data={
             focus+"_id": focus_list,
             "polarity": focus_list.map(
-                lambda x: mean((reviews(x)[META_POLARITY_NAME]).tolist())
+                lambda x: mean((reviews(x)[self.META_POLARITY_NAME]).tolist())
             ),
             "review_length": focus_list.map(
                 lambda x: mean(
-                    (reviews(x)[META_LENGTH_NAME]).tolist())
+                    (reviews(x)[self.META_LENGTH_NAME]).tolist())
             ),
             "review_rating": focus_list.map(
                 lambda x: mean(
-                    (reviews(x)[META_RATING_NAME]).tolist())
+                    (reviews(x)[self.META_RATING_NAME]).tolist())
             )
         })
 
@@ -209,7 +210,7 @@ class QualityTable:
 
         return pd.DataFrame(data={
             "review_id": self.meta_table[
-                META_ID_NAME].sort_values(),
+                self.META_ID_NAME].sort_values(),
             "polarity": self.diff("polarity"),
             "review_length": self.diff("review_length"),
             "review_rating": self.diff("review_rating")
@@ -223,7 +224,7 @@ class QualityTable:
         )
 
         # split to a list of lowercased words, then drop stopwords
-        cleaned_comments = self.main_table[COMMENTS_NAME].map(
+        cleaned_comments = self.main_table[self.COMMENTS_NAME].map(
             lambda x: x.lower().translate(
                 str.maketrans('', '', punctuation+'\n\r\xa0\xad')
             ).split(' ')
@@ -267,19 +268,19 @@ class QualityTable:
 
         lemmas = self.main_table['lemmas']
 
-        self.main_table[TF_IDF_VECT_NAME] = pd.Series(
+        self.main_table[self.TF_IDF_VECT_NAME] = pd.Series(
             [
                 get_tf_idf_vect(tf_idf_df, lemmas[idx], idx)
                 for idx in range(0, len(self.main_table.values))
             ]
         )
 
-        self.main_table[TF_IDF_MEAN_NAME] = \
-            self.main_table[TF_IDF_VECT_NAME].map(
+        self.main_table[self.TF_IDF_MEAN_NAME] = \
+            self.main_table[self.TF_IDF_VECT_NAME].map(
             lambda row: float(sum(row)) / max(len(row), 1))
 
-        self.main_table[TF_IDF_SUM_NAME] = \
-            self.main_table[TF_IDF_VECT_NAME].map(
+        self.main_table[self.TF_IDF_SUM_NAME] = \
+            self.main_table[self.TF_IDF_VECT_NAME].map(
             sum)
 
     def _displacement(self, args):
@@ -314,42 +315,42 @@ class QualityTable:
         review_id = args[0]
         return 1 - (
             abs(
-                self.meta_row(review_id)[META_RATING_NAME] -
-                self.meta_row(review_id)[META_POLARITY_NAME]
+                self.meta_row(review_id)[self.META_RATING_NAME] -
+                self.meta_row(review_id)[self.META_POLARITY_NAME]
             ) / 4)
 
     def c10(self, args):
         # args[0] = review_id
         return self._normalize_log(
-            self.meta_row(args[0])[META_RATING_NAME]
+            self.meta_row(args[0])[self.META_RATING_NAME]
         )
 
     def c11(self, args):
         review_id = args[0]
-        tf_idf_vect = self.main_row(review_id)[TF_IDF_VECT_NAME]
+        tf_idf_vect = self.main_row(review_id)[self.TF_IDF_VECT_NAME]
         return mean(tf_idf_vect)
 
     def c12(self, args):
         # args[0] = review_id
         return self._normalize_log(
-            self.meta_row(args[0])[META_LENGTH_NAME]
+            self.meta_row(args[0])[self.META_LENGTH_NAME]
         )
 
     def filter_by_listing(self, listing_id):
         return self.main_table[
-            self.main_table[LISTING_ID_NAME] == listing_id
+            self.main_table[self.LISTING_ID_NAME] == listing_id
         ]
 
     def _max_item_appreciations(self, listing_id):
-        return self.filter_by_listing(listing_id)[APPRECIATIONS_NAME].max()
+        return self.filter_by_listing(listing_id)[self.APPRECIATIONS_NAME].max()
 
     def fcontr(self, review_id):
-        listing_id = self.main_row(review_id)[LISTING_ID_NAME]
-        if self.main_row(review_id)[APPRECIATIONS_NAME] == 0:
+        listing_id = self.main_row(review_id)[self.LISTING_ID_NAME]
+        if self.main_row(review_id)[self.APPRECIATIONS_NAME] == 0:
             return 0
         else:
             return (
-                self.main_row(review_id)[APPRECIATIONS_NAME] /
+                self.main_row(review_id)[self.APPRECIATIONS_NAME] /
                 self._max_item_appreciations(listing_id)
             )
 
