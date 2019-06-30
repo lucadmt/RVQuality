@@ -13,6 +13,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from rvquality.common import drop_stopwords
 from rvquality.options import Options
 import rvquality.components as comps
+import rvquality.quality_table as rv_qt
 
 def measure(func):
   def measure_wrapper(*args, **kwargs):
@@ -430,3 +431,29 @@ class TestComponents(object):
 
     rv_id = main_table[qt.opts.ID_NAME][0]
     assert qt.review_utility(rv_id, [1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1]) == qt.summation(rv_id)
+  
+  def test_quality_of(self):
+    main_table = pd.read_csv(paths.yelp_path, sep=";")
+    qt = rv_qt.QualityTable(main_table)
+    qt_o = QualityTable(main_table)
+    opts = Options()
+    opts.POLARITY_NAME = "pol_mean_tb_v"
+    opts.ID_NAME = "id"
+    opts.RATING_NAME = "review.stars"
+    qt.prepare()
+    qt_o.prepare()
+
+    components = [
+      comps.C1(), 
+      comps.C2(), 
+      comps.C3(), 
+      comps.C4(), 
+      comps.C7(), 
+      comps.C8(),
+      comps.C9(),
+      comps.C10(),
+      comps.C11(),
+      comps.C12()]
+
+    rv_id = main_table[qt.opts.ID_NAME][0]
+    assert qt_o.summation(rv_id) == qt.quality_of(rv_id, components)
