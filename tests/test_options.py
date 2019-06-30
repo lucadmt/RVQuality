@@ -21,9 +21,10 @@ class TestOptions(object):
 
   def test_preexistent(self):
     opts = Options()
-    assert opts.ID_NAME == "review_id"
+    assert opts.ID_NAME == "review_id" or opts.ID_NAME == "id"
 
   def test_override_preexistent(self):
     opts = Options()
     opts.ID_NAME = "changed_id"
     assert opts.ID_NAME == "changed_id"
+    opts.ID_NAME = "review_id"

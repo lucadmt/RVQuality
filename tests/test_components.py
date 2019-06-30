@@ -1,6 +1,7 @@
 import csv
 import math
 import os
+import paths
 from hashlib import md5
 from statistics import mean
 from string import punctuation
@@ -11,8 +12,17 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 from rvquality.common import drop_stopwords
 from rvquality.options import Options
-import rvquality.components as components
+import rvquality.components as comps
 
+def measure(func):
+  def measure_wrapper(*args, **kwargs):
+    from time import clock
+    start = clock()
+    ret = func(*args, **kwargs)
+    end = clock()
+    print("%s function lasted: %.7f seconds", func.__name__, (end-start))
+    return ret
+  return measure_wrapper 
 
 class QualityTable:
     def __init__(self, main_table, default_weight=1):
@@ -54,15 +64,15 @@ class QualityTable:
         if os.path.exists(os.path.expanduser(
                 "~/.rvcache/"+file_hash+"_meta.csv")):
             self.meta_table = pd.read_csv(os.path.expanduser(
-                "~/.rvcache/"+file_hash+"_meta.csv"))
+                "~/.rvcache/"+file_hash+"_meta.csv"), sep=';')
             self.items_means = pd.read_csv(os.path.expanduser(
-                "~/.rvcache/"+file_hash+"_listing_means.csv"))
+                "~/.rvcache/"+file_hash+"_listing_means.csv"), sep=';')
             self.reviewers_means = pd.read_csv(os.path.expanduser(
-                "~/.rvcache/"+file_hash+"_reviewers_means.csv"))
+                "~/.rvcache/"+file_hash+"_reviewers_means.csv"), sep=';')
             self.items_diffs = pd.read_csv(os.path.expanduser(
-                "~/.rvcache/"+file_hash+"_listing_diffs.csv"))
+                "~/.rvcache/"+file_hash+"_listing_diffs.csv"), sep=';')
             self.reviewers_diffs = pd.read_csv(os.path.expanduser(
-                "~/.rvcache/"+file_hash+"_reviewers_diffs.csv"))
+                "~/.rvcache/"+file_hash+"_reviewers_diffs.csv"), sep=';')
         else:
             # generate intermediate tables
             self.meta_table = self._generate_meta_table()
@@ -75,27 +85,27 @@ class QualityTable:
             self.meta_table.to_csv(
                 os.path.expanduser("~/.rvcache/"+file_hash+"_meta.csv"),
                 index=False,
-                sep=";", quoting=csv.QUOTE_ALL)
+                sep=';', quoting=csv.QUOTE_ALL)
             self.items_means.to_csv(
                 os.path.expanduser("~/.rvcache/"+file_hash +
                                    "_listing_means.csv"),
                 index=False,
-                sep=";", quoting=csv.QUOTE_ALL)
+                sep=';', quoting=csv.QUOTE_ALL)
             self.reviewers_means.to_csv(
                 os.path.expanduser("~/.rvcache/"+file_hash +
                                    "_reviewers_means.csv"),
                 index=False,
-                sep=";", quoting=csv.QUOTE_ALL)
+                sep=';', quoting=csv.QUOTE_ALL)
             self.items_diffs.to_csv(
                 os.path.expanduser("~/.rvcache/"+file_hash +
                                    "_listing_diffs.csv"),
                 index=False,
-                sep=";", quoting=csv.QUOTE_ALL)
+                sep=';', quoting=csv.QUOTE_ALL)
             self.reviewers_diffs.to_csv(
                 os.path.expanduser("~/.rvcache/"+file_hash +
                                    "_reviewers_diffs.csv"),
                 index=False,
-                sep=";", quoting=csv.QUOTE_ALL)
+                sep=';', quoting=csv.QUOTE_ALL)
 
         if self.opts.TF_IDF_VECT_NAME not in self.main_table.columns:
             self.generate_tf_idf()
@@ -342,6 +352,27 @@ class QualityTable:
         else:
             return weight * func(args)
 
+    @measure
+    def summation(self, r):
+      comp_lst = []
+      numerator = 0
+      comp_lst.append(comps.C1())
+      comp_lst.append(comps.C2())
+      comp_lst.append(comps.C3())
+      comp_lst.append(comps.C4())
+      comp_lst.append(comps.C7())
+      comp_lst.append(comps.C8())
+      comp_lst.append(comps.C9())
+      comp_lst.append(comps.C10())
+      comp_lst.append(comps.C11())
+      comp_lst.append(comps.C12())
+      values_lst = [component.apply(self.main_table, self.meta_table, self.reviewers_means, self.items_means, self.reviewers_diffs, self.items_diffs, r) for component in comp_lst]
+      numerator = sum([x for x in values_lst])
+      weight_lst = [component.weight for component in comp_lst]
+      denominator = sum([x for x in weight_lst])
+      return numerator/denominator
+
+    @measure
     def review_utility(self, r, w):
         return sum([
             self._null_zero_terms(
@@ -386,3 +417,16 @@ class QualityTable:
         df['fcontr'] = df['id'].map(
             lambda r: self.fcontr(r)
         )
+
+class TestComponents(object):
+  def test_same_values(self):
+    main_table = pd.read_csv(paths.yelp_path, sep=";")
+    qt = QualityTable(main_table)
+    opts = Options()
+    opts.POLARITY_NAME = "pol_mean_tb_v"
+    opts.ID_NAME = "id"
+    opts.RATING_NAME = "review.stars"
+    qt.prepare()
+
+    rv_id = main_table[qt.opts.ID_NAME][0]
+    assert qt.review_utility(rv_id, [1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1]) == qt.summation(rv_id)

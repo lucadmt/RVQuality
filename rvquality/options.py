@@ -1,31 +1,25 @@
-import threading
+class Singleton (type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+      if cls not in cls._instances:
+        cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+      return cls._instances[cls]
 
-class Options(object):
-    __instance = None
-    __options = {}
-    __lock = threading.Lock()
-    def __new__(cls):
-        if Options.__instance is None:
-            Options.__instance = object.__new__(cls)
-        return Options.__instance
-
-    def __init__(self):
-        # main table constants
-        Options.__instance.ID_NAME = "review_id"
-        Options.__instance.REVIEWER_ID_NAME = "reviewer_id"
-        Options.__instance.LISTING_ID_NAME = "listing_id"
-        Options.__instance.POLARITY_NAME = "polarity"
-        Options.__instance.COMMENTS_NAME = "comments"
-        Options.__instance.RATING_NAME = "rating"
-        Options.__instance.TF_IDF_VECT_NAME = "tf_idf_vect"
-        Options.__instance.TF_IDF_SUM_NAME = "tf_idf_sum"
-        Options.__instance.TF_IDF_MEAN_NAME = "tf_idf_mean"
-        Options.__instance.APPRECIATIONS_NAME = "appreciations"
-
-        # meta table constants
-        Options.__instance.META_ID_NAME = "id"
-        Options.__instance.META_REVIEWER_ID_NAME = "reviewer_id"
-        Options.__instance.META_LISTING_ID_NAME = "listing_id"
-        Options.__instance.META_POLARITY_NAME = "polarity"
-        Options.__instance.META_LENGTH_NAME = "review_length"
-        Options.__instance.META_RATING_NAME = "review_rating"
+class Options(object, metaclass=Singleton):
+  def __init__(self):
+    self.ID_NAME = 'review_id'
+    self.REVIEWER_ID_NAME = 'reviewer_id'
+    self.LISTING_ID_NAME = 'listing_id'
+    self.POLARITY_NAME = 'polarity'
+    self.COMMENTS_NAME = 'comments'
+    self.RATING_NAME = 'rating'
+    self.TF_IDF_VECT_NAME = 'tf_idf_vect'
+    self.TF_IDF_SUM_NAME = 'tf_idf_sum'
+    self.TF_IDF_MEAN_NAME = 'tf_idf_mean'
+    self.APPRECIATIONS_NAME = 'appreciations'
+    self.META_ID_NAME = 'id'
+    self.META_REVIEWER_ID_NAME = 'reviewer_id'
+    self.META_LISTING_ID_NAME = 'listing_id'
+    self.META_POLARITY_NAME = 'polarity'
+    self.META_LENGTH_NAME = 'review_length'
+    self.META_RATING_NAME = 'review_rating'

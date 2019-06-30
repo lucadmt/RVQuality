@@ -1,4 +1,5 @@
 from types import FunctionType
+import concurrent.futures
 from rvquality.options import Options
 from math import log10
 
@@ -10,7 +11,10 @@ class MetaComponent(type):
           if args[0].weight == 0:
             return 0
           else:
-            return function(*args, **kwargs)
+            # max_workers = None -> #processors * 5
+            with concurrent.futures.ThreadPoolExecutor(max_workers = None) as executor:
+              c_value = executor.submit(function, *args, **kwargs)
+            return c_value.result()
         return wrapper_null_zero
       clsdict['apply'] = null_zero(clsdict['apply'])
     return type.__new__(cls, name, bases, clsdict)
@@ -20,6 +24,11 @@ class Component(object, metaclass=MetaComponent):
     self.name = name
     self.weight = weight
     self.opts = Options()
+
+  def main_row(self, main_table, review_id):
+    return (main_table.loc[
+        main_table[self.opts.ID_NAME] == review_id
+    ].iloc[0])
 
   def item_mean(self, mean_tbl, itm, focus):
     return mean_tbl.loc[
@@ -56,7 +65,7 @@ class Component(object, metaclass=MetaComponent):
           meta_table[self.opts.META_ID_NAME] == review_id
       ][self.opts.META_REVIEWER_ID_NAME].iloc[0]
   
-  def _normalize_log(self, arg):
+  def normalize_log(self, arg):
     return (
         log10(arg + 1) /
         (1 + log10(arg + 1))
