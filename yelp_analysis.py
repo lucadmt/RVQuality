@@ -11,96 +11,63 @@ import ast
 import time
 
 from rvquality.quality_table import QualityTable
+from rvquality.options import Options
+import rvquality.components as components
 import paths
 
 start = time.time()
+
+# Preprocess some rows (convert back to list form)
 
 data_frame = pd.read_csv(paths.yelp_tf_idf_vect_path, sep=";")
 
 data_frame['tf_idf_vect'] = data_frame['tf_idf_vect'].map(
     ast.literal_eval)
 
-# meta table expects different names
-data_frame.rename(index=str, columns={
-                  'review.stars': 'rating',
-                  'polarity': 'tb_polarity',
-                  'pol_mean_tb_v': 'polarity'
-                  }, inplace=True)
+opts = Options()
 
-utility_table = QualityTable(data_frame)
+opts.RATING_NAME = "review.stars"
+opts.POLARITY_NAME = "pol_mean_tb_v"
+opts.ID_NAME = "id"
 
-c1_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'c1', data_frame
-])
+# options are singleton, hence there's no need to pass it
+quality_table = QualityTable(data_frame)
 
-c2_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'c2', data_frame
-])
+quality_table.prepare()
 
-c1_t.start()
-c2_t.start()
-
-# compute the other components for yelp dataset
-
-c3_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'c3', data_frame
-])
-
-c4_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], 'c4', data_frame
-])
-
-c3_t.start()
-c4_t.start()
-
-c7_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], 'c7', data_frame
-])
-
-c8_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], 'c8', data_frame
-])
-
-c7_t.start()
-c8_t.start()
-
-c9_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], 'c9', data_frame
-])
-
-c10_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0], 'c10', data_frame
-])
-
-c11_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], 'c11', data_frame
-])
-
-c12_t = threading.Thread(target=utility_table.compute_utility, args=[
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 'c12', data_frame
-])
-
-fcontr_t = threading.Thread(target=utility_table.compute_fcontr, args=[
-    data_frame
-])
-
-c9_t.start()
-c10_t.start()
-c11_t.start()
-c12_t.start()
-fcontr_t.start()
-
-c1_t.join()
-c2_t.join()
-c3_t.join()
-c4_t.join()
-c7_t.join()
-c8_t.join()
-c9_t.join()
-c10_t.join()
-c11_t.join()
-c12_t.join()
-fcontr_t.join()
+data_frame[components.C1().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C1()])
+)
+data_frame[components.C2().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C2()])
+)
+data_frame[components.C3().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C3()])
+)
+data_frame[components.C4().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C4()])
+)
+data_frame[components.C7().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C7()])
+)
+data_frame[components.C8().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C8()])
+)
+data_frame[components.C9().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C9()])
+)
+data_frame[components.C10().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C10()])
+)
+data_frame[components.C11().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C11()])
+)
+data_frame[components.C12().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C12()])
+)
+data_frame[components.fcontr.Fcontr().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.fcontr.Fcontr()])
+)
 
 end = time.time()
 
@@ -123,17 +90,17 @@ data_frame = data_frame[
      "est_rating",
      "tf_idf_mean",
      "rating",
-     "c1",
-     "c2",
-     "c3",
-     "c4",
-     "c7",
-     "c8",
-     "c9",
-     "c10",
-     "c11",
-     "c12",
-     "fcontr"]
+     "C1",
+     "C2",
+     "C3",
+     "C4",
+     "C7",
+     "C8",
+     "C9",
+     "C10",
+     "C11",
+     "C12",
+     "Fcontr"]
 ]
 
 

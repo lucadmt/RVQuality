@@ -25,41 +25,49 @@ class Component(object, metaclass=MetaComponent):
     self.weight = weight
     self.opts = Options()
 
+  # selects a row in main_table by review_id
   def main_row(self, main_table, review_id):
     return (main_table.loc[
         main_table[self.opts.ID_NAME] == review_id
     ].iloc[0])
 
+  # selects a row in mean_table by itm (listing id) in focus
   def item_mean(self, mean_tbl, itm, focus):
     return mean_tbl.loc[
           mean_tbl['listing_id'] == itm
     ][focus].iloc[0]
 
+  # selects a row in mean_table by reviewer (reviewer id) in focus
   def reviewer_mean(self, mean_tbl, usr, focus):
       return mean_tbl.loc[
           mean_tbl['reviewer_id'] == usr
       ][focus].iloc[0]
 
+  # selects a row from meta_table by review_id
   def meta_row(self, meta_table, review_id):
       return meta_table.loc[
           meta_table[self.opts.META_ID_NAME] == review_id
       ].iloc[0]
 
+  # selects reviews from meta_table by reviewer (usr_id)
   def meta_user_reviews(self, meta_table, user_id):  # rev_user
       return meta_table.loc[
           meta_table[self.opts.META_REVIEWER_ID_NAME] == user_id
       ]
 
+  # selects reviews from meta_table by listing (item_id)
   def meta_item_reviews(self, meta_table, item_id):  # rev_item
       return meta_table.loc[
           meta_table[self.opts.META_LISTING_ID_NAME] == item_id
       ]
 
+  # selects a listing id by review_id
   def meta_item(self, meta_table, review_id):
       return meta_table.loc[
           meta_table[self.opts.META_ID_NAME] == review_id
       ][self.opts.META_LISTING_ID_NAME].iloc[0]
 
+  # selects a reviewer id by review_id
   def meta_user(self, meta_table, review_id):
       return meta_table.loc[
           meta_table[self.opts.META_ID_NAME] == review_id
@@ -71,5 +79,5 @@ class Component(object, metaclass=MetaComponent):
         (1 + log10(arg + 1))
     )
 
-  def apply(self, main_tbl, meta_tbl, r_means_tbl, l_means_tbl, r_diffs_tbl, l_diffs_tbl, rv_id):
+  def apply(self, main_table, meta_table, reviewers_means, items_means, reviewers_diffs, items_diffs, review_id):
     raise NotImplementedError

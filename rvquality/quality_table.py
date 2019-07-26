@@ -18,28 +18,12 @@ class QualityTable:
     self.opts = Options()
     self.main_table = main_table
 
+
+  # select a row by review_id in main_table
   def main_row(self, review_id):
     return (self.main_table.loc[
         self.main_table['id'] == review_id
     ].iloc[0])
-
-  def set_reviewer_id(self, colname="reviewer_id"):
-    self.opts.REVIEWER_ID_NAME = colname
-
-  def set_listing_id(self, colname="listing_id"):
-    self.opts.LISTING_ID_NAME = colname
-
-  def set_review_id(self, colname="review_id"):
-    self.opts.ID_NAME = colname
-
-  def set_polarity(self, colname="polarity"):
-    self.opts.POLARITY_NAME = colname
-
-  def set_review_comments(self, colname="comments"):
-    self.opts.COMMENTS_NAME = colname
-
-  def set_review_rating(self, colname="rating"):
-    self.opts.RATING_NAME = colname
 
   def prepare(self):
     if not os.path.exists(os.path.expanduser("~/.rvcache/")):
@@ -62,10 +46,10 @@ class QualityTable:
     else:
       # generate intermediate tables
       self.meta_table = self._generate_meta_table()
-      self.items_means = self._generate_means_table("listing")
-      self.reviewers_means = self._generate_means_table("reviewer")
-      self.items_diffs = self._generate_diffs_table("listing")
-      self.reviewers_diffs = self._generate_diffs_table("reviewer")
+      self.items_means = self._generate_listing_means_table()
+      self.reviewers_means = self._generate_reviewer_means_table()
+      self.items_diffs = self._generate_listing_diffs_table()
+      self.reviewers_diffs = self._generate_reviewer_diffs_table()
 
       # save intermediate tables
       self.meta_table.to_csv(
@@ -98,57 +82,91 @@ class QualityTable:
 
   def _generate_meta_table(self):
     return pd.DataFrame(data={
+      # reviewer_id, copied from main_table
       self.opts.META_REVIEWER_ID_NAME: self.main_table[self.opts.REVIEWER_ID_NAME],
+      # listing_id, copied from main_table
       self.opts.META_LISTING_ID_NAME: self.main_table[self.opts.LISTING_ID_NAME],
+      # review_id copied by main_table
       self.opts.META_ID_NAME: self.main_table[self.opts.ID_NAME],
+      # review polarity, copied from main_table
       self.opts.META_POLARITY_NAME: self.main_table[self.opts.POLARITY_NAME],
+      # review length, synthetized by main_table
       self.opts.META_LENGTH_NAME: self.main_table[
         self.opts.COMMENTS_NAME
       ].map(
         lambda x: len(x.split(" "))
       ),
+      # review rating, copied from main_table
       self.opts.META_RATING_NAME: self.main_table[
         self.opts.RATING_NAME
       ]
     })
 
+  # selects reviews by reviewer
   def meta_user_reviews(self, user_id):  # rev_user
     return self.meta_table.loc[
       self.meta_table[self.opts.META_REVIEWER_ID_NAME] == user_id
     ]
 
+  # selects reviews by listing
   def meta_item_reviews(self, item_id):  # rev_item
     return self.meta_table.loc[
       self.meta_table[self.opts.META_LISTING_ID_NAME] == item_id
     ]
 
-  def _generate_means_table(self, focus):
+  def _generate_reviewer_means_table(self):
     focus_list = pd.Series(data=self.meta_table
-                           [focus+'_id'].unique()).sort_values()
-    reviews = self.meta_item_reviews \
-        if focus == "listing" \
-        else self.meta_user_reviews
+                           ['reviewer_id'].unique()).sort_values()
 
     return pd.DataFrame(data={
-      focus+"_id": focus_list,
+      # reviewer_id, took from meta_table, one time, sorted increasingly
+      "reviewer_id": focus_list,
+      # for each reviewer_id, takes all polarities of its reviews.
       "polarity": focus_list.map(
-          lambda x: mean((reviews(x)[self.opts.META_POLARITY_NAME]).tolist())
+          lambda x: mean((self.meta_user_reviews(x)[self.opts.META_POLARITY_NAME]).tolist())
       ),
+      # for each reviewer_id, takes all lengths of its reviews.
       "review_length": focus_list.map(
         lambda x: mean(
-          (reviews(x)[self.opts.META_LENGTH_NAME]).tolist())
+          (self.meta_user_reviews(x)[self.opts.META_LENGTH_NAME]).tolist())
       ),
+      # for each reviewer_id, takes the average of all ratings of its reviews.
       "review_rating": focus_list.map(
         lambda x: mean(
-          (reviews(x)[self.opts.META_RATING_NAME]).tolist())
+          (self.meta_user_reviews(x)[self.opts.META_RATING_NAME]).tolist())
       )
     })
 
+  def _generate_listing_means_table(self):
+    focus_list = pd.Series(data=self.meta_table
+                           ['listing_id'].unique()).sort_values()
+
+    return pd.DataFrame(data={
+      # listing_id, took from meta_table, one time, sorted increasingly
+      "listing_id": focus_list,
+      # for each listing_id, takes all polarities of its reviews.
+      "polarity": focus_list.map(
+          lambda x: mean((self.meta_user_reviews(x)[self.opts.META_POLARITY_NAME]).tolist())
+      ),
+      # for each listing_id, takes all lengths of its reviews.
+      "review_length": focus_list.map(
+        lambda x: mean(
+          (self.meta_user_reviews(x)[self.opts.META_LENGTH_NAME]).tolist())
+      ),
+      # for each listing_id, takes the average of all ratings of its reviews.
+      "review_rating": focus_list.map(
+        lambda x: mean(
+          (self.meta_user_reviews(x)[self.opts.META_RATING_NAME]).tolist())
+      )
+    })
+
+  # selects from listing means by listing id and focus
   def item_mean(self, itm, focus):
     return self.items_means.loc[
       self.items_means['listing_id'] == itm
     ][focus].iloc[0]
 
+  # selects from reviewer means by listing id and focus
   def reviewer_mean(self, usr, focus):
     return self.reviewers_means.loc[
       self.reviewers_means['reviewer_id'] == usr
@@ -166,17 +184,30 @@ class QualityTable:
         row[focus] - self.item_mean(row['listing_id'], focus)
       ), axis=1)
 
-  def _generate_diffs_table(self, focus):
-    self.diff = self._reviewer_abs_diff \
-      if focus == "reviewer" \
-      else self._item_abs_diff
-
+  def _generate_reviewer_diffs_table(self):
     return pd.DataFrame(data={
+      # review_id, took from meta_table, sorted increasingly
       "review_id": self.meta_table[
         self.opts.META_ID_NAME].sort_values(),
-      "polarity": self.diff("polarity"),
-      "review_length": self.diff("review_length"),
-      "review_rating": self.diff("review_rating")
+      # for each meta_table record _p_, takes its polarity, and subtracts the mean polarity of _p_[reviewer_id]
+      "polarity": self._reviewer_abs_diff("polarity"),
+      # for each meta_table record _p_, takes its length, and subtracts the mean length of _p_[reviewer_id]
+      "review_length": self._reviewer_abs_diff("review_length"),
+      # for each meta_table record _p_, takes its rating, and subtracts the mean rating of _p_[reviewer_id]
+      "review_rating": self._reviewer_abs_diff("review_rating")
+    })
+
+  def _generate_listing_diffs_table(self):
+    return pd.DataFrame(data={
+      # review_id, took from meta_table, sorted increasingly
+      "review_id": self.meta_table[
+        self.opts.META_ID_NAME].sort_values(),
+      # for each meta_table record _p_, takes its polarity, and subtracts the mean polarity of _p_[listing_id]
+      "polarity": self._item_abs_diff("polarity"),
+      # for each meta_table record _p_, takes its length, and subtracts the mean length of _p_[listing_id]
+      "review_length": self._item_abs_diff("review_length"),
+      # for each meta_table record _p_, takes its rating, and subtracts the mean rating of _p_[listing_id]
+      "review_rating": self._item_abs_diff("review_rating")
     })
 
   def generate_tf_idf(self):
