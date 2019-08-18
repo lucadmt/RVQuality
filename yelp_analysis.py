@@ -19,15 +19,13 @@ start = time.time()
 
 # Preprocess some rows (convert back to list form)
 
-data_frame = pd.read_csv(paths.yelp_tf_idf_vect_path, sep=";")
+data_frame = pd.read_csv(paths.yelp_components, sep=";")
 
 data_frame['tf_idf_vect'] = data_frame['tf_idf_vect'].map(
     ast.literal_eval)
 
 opts = Options()
 
-opts.RATING_NAME = "review.stars"
-opts.POLARITY_NAME = "pol_mean_tb_v"
 opts.ID_NAME = "id"
 
 # options are singleton, hence there's no need to pass it
@@ -35,38 +33,35 @@ quality_table = QualityTable(data_frame)
 
 quality_table.prepare()
 
-data_frame[components.C1().name] = data_frame[opts.ID_NAME].map(
-    lambda id: quality_table.quality_of(id, [components.C1()])
+data_frame[components.C1Log().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C1Log()])
 )
-data_frame[components.C2().name] = data_frame[opts.ID_NAME].map(
-    lambda id: quality_table.quality_of(id, [components.C2()])
+data_frame[components.C2Log().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C2Log()])
 )
-data_frame[components.C3().name] = data_frame[opts.ID_NAME].map(
-    lambda id: quality_table.quality_of(id, [components.C3()])
+data_frame[components.C3Log().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C3Log()])
 )
-data_frame[components.C4().name] = data_frame[opts.ID_NAME].map(
-    lambda id: quality_table.quality_of(id, [components.C4()])
+data_frame[components.C4Log().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C4Log()])
 )
-data_frame[components.C7().name] = data_frame[opts.ID_NAME].map(
-    lambda id: quality_table.quality_of(id, [components.C7()])
+data_frame[components.C7Log().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C7Log()])
 )
-data_frame[components.C8().name] = data_frame[opts.ID_NAME].map(
-    lambda id: quality_table.quality_of(id, [components.C8()])
+data_frame[components.C8Log().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C8Log()])
 )
-data_frame[components.C9().name] = data_frame[opts.ID_NAME].map(
-    lambda id: quality_table.quality_of(id, [components.C9()])
+data_frame[components.C9Log().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C9Log()])
 )
-data_frame[components.C10().name] = data_frame[opts.ID_NAME].map(
-    lambda id: quality_table.quality_of(id, [components.C10()])
+data_frame[components.C11Log().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.C11Log()])
 )
-data_frame[components.C11().name] = data_frame[opts.ID_NAME].map(
-    lambda id: quality_table.quality_of(id, [components.C11()])
+data_frame[components.fcontr.FcontrLog().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.fcontr.FcontrLog()])
 )
-data_frame[components.C12().name] = data_frame[opts.ID_NAME].map(
-    lambda id: quality_table.quality_of(id, [components.C12()])
-)
-data_frame[components.fcontr.Fcontr().name] = data_frame[opts.ID_NAME].map(
-    lambda id: quality_table.quality_of(id, [components.fcontr.Fcontr()])
+data_frame[components.fcontr.FcontrGlob().name] = data_frame[opts.ID_NAME].map(
+    lambda id: quality_table.quality_of(id, [components.fcontr.FcontrGlob()])
 )
 
 end = time.time()
@@ -90,17 +85,27 @@ data_frame = data_frame[
      "est_rating",
      "tf_idf_mean",
      "rating",
-     "C1",
-     "C2",
-     "C3",
-     "C4",
-     "C7",
-     "C8",
-     "C9",
-     "C10",
-     "C11",
-     "C12",
-     "Fcontr"]
+     "c1",
+     "C1Log",
+     "c2",
+     "C2Log",
+     "c3",
+     "C3Log",
+     "c4",
+     "C4Log",
+     "c7",
+     "C7Log",
+     "c8",
+     "C8Log",
+     "c9",
+     "C9Log",
+     "c10",
+     "c11",
+     "C11Log",
+     "c12",
+     "fcontr",
+     "FcontrLog",
+     "FcontrGlob"]
 ]
 
 

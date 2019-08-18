@@ -146,17 +146,17 @@ class QualityTable:
       "listing_id": focus_list,
       # for each listing_id, takes all polarities of its reviews.
       "polarity": focus_list.map(
-          lambda x: mean((self.meta_user_reviews(x)[self.opts.META_POLARITY_NAME]).tolist())
+          lambda x: mean((self.meta_item_reviews(x)[self.opts.META_POLARITY_NAME]).tolist())
       ),
       # for each listing_id, takes all lengths of its reviews.
       "review_length": focus_list.map(
         lambda x: mean(
-          (self.meta_user_reviews(x)[self.opts.META_LENGTH_NAME]).tolist())
+          (self.meta_item_reviews(x)[self.opts.META_LENGTH_NAME]).tolist())
       ),
       # for each listing_id, takes the average of all ratings of its reviews.
       "review_rating": focus_list.map(
         lambda x: mean(
-          (self.meta_user_reviews(x)[self.opts.META_RATING_NAME]).tolist())
+          (self.meta_item_reviews(x)[self.opts.META_RATING_NAME]).tolist())
       )
     })
 

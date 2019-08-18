@@ -16,7 +16,7 @@ class Fcontr(Component):
     else:
       return (
         self.main_row(main_tbl, rv_id)[self.opts.APPRECIATIONS_NAME] /
-        self._max_item_appreciations(listing_id)
+        self._max_item_appreciations(main_tbl, listing_id)
       )
 
 class FcontrGlob(Component):
